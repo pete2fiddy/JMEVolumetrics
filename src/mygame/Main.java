@@ -65,7 +65,8 @@ public class Main extends SimpleApplication {
         */
         
         
-        Vector3f[] points = generatePointsVec3f(100000);
+        Vector3f[] points = generateSpheresVec3f(500000, new Vector3f[] {Vector3f.ZERO, new Vector3f(3f, -3f, 5f)}, 
+                new float[] {2f, 3f});
         pointCloud = PointCloud.initWithFixedColorAndSize(assetManager, cam, points, new ColorRGBA(1f,0f,0f,1f), 10f);
         pointCloud.enableNNSearchThread(true);
         volCam.attachChildren(pointCloud.getCloudNode());
@@ -98,17 +99,7 @@ public class Main extends SimpleApplication {
         
     }
     
-    private FloatBuffer generatePoints(int nPoints){
-        FloatBuffer out = BufferUtils.createFloatBuffer(nPoints*3);
-        for(int i = 0; i < nPoints; i++){
-            for(int j = 0; j < 3; j++){
-                out.put((float)(10*(Math.random()-.5)));
-            }
-        }
-        return out;
-    }
-    
-    private Vector3f[] generatePointsVec3f(int nPoints) {
+    private Vector3f[] generateCubeVec3f(int nPoints) {
         Vector3f[] out = new Vector3f[nPoints];
         for(int i = 0; i < nPoints; i++){
             out[i] = new Vector3f();
@@ -119,13 +110,30 @@ public class Main extends SimpleApplication {
         return out;
     }
     
-    private DoubleMatrix generateDoubleMatrixPoints(int nPoints){
-        DoubleMatrix points = DoubleMatrix.zeros(nPoints, 3);
-        for(int i = 0; i < points.rows; i++){
-            points.putRow(i, new DoubleMatrix(new double[][] {{(10*(Math.random()-.5)),
-            (10*(Math.random()-.5)),
-            (10*(Math.random()-.5))}}).transpose());
+    private Vector3f[] generateSpheresVec3f(int nPointsPerSphere, Vector3f[] centers, float[] radiuses) {
+        Vector3f[] out = new Vector3f[nPointsPerSphere*centers.length];
+        for(int sphereNum = 0; sphereNum < centers.length; sphereNum++) {
+            Vector3f[] points = generateSphereVec3f(nPointsPerSphere, centers[sphereNum], radiuses[sphereNum]);
+            for(int i = 0; i < nPointsPerSphere; i++){
+                out[sphereNum*nPointsPerSphere + i] = points[i];
+            }
         }
-        return points;
+        return out;
     }
+    
+    private Vector3f[] generateSphereVec3f(int nPoints, Vector3f center, float r) {
+        Vector3f[] out = new Vector3f[nPoints];
+        for(int i = 0; i < nPoints; i++) {
+            out[i] = new Vector3f();
+            float z = (float)(2*r*(Math.random()-.5));
+            float rHeight = (float)Math.sqrt((r*r - z*z));
+            float theta = (float)(2*Math.PI*Math.random());
+            out[i].setX((float)(rHeight * Math.sin(theta)));
+            out[i].setY((float)(rHeight * Math.cos(theta)));
+            out[i].setZ(z);
+            out[i] = out[i].add(center);
+        }
+        return out;
+    }
+    
 }

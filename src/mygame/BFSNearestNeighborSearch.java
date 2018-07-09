@@ -12,46 +12,72 @@ import com.jme3.renderer.Camera;
 import java.util.LinkedList;
 import mygame.util.PointUtils;
 
-/**
- *
- * @author Owner
- */
+
 public class BFSNearestNeighborSearch implements Runnable {
-    private final int MAX_NEIGHBORHOOD_SEARCH_DISTANCE = 15;
-    private final int[][] idBuffer;
+    private final int MAX_NEIGHBORHOOD_SEARCH_DISTANCE = 10, MAX_NEAREST_NEIGHBOR_CANDIDATES = 100;
+    private int[][] idBuffer;
     private final Vector3f[] X;
     private final Camera cam;
     //explanation for why doUpdate must be volatile here: https://meta.stackoverflow.com/questions/269174/questions-about-threadloop-not-working-without-print-statement
     private volatile boolean doUpdate = true;
+    //controls how much to penalize far away points when selecting nearest neighbor (assumes user generally wants to favor closer points)
+    private float zDepthDistanceWeight = 5000f;
     private Matrix4f pointTransform = Matrix4f.IDENTITY;
     
-    public BFSNearestNeighborSearch(Camera cam, Vector3f[] X, int bufferWidth, int bufferHeight) {
+    public BFSNearestNeighborSearch(Camera cam, Vector3f[] X) {
         this.cam = cam;
         this.X = X;
-        this.idBuffer = new int[bufferWidth][bufferHeight];
         resetIdBuffer();
     }
     
+    //should have some way to find the nearest neighbor and favor those that are closer depth to the camera -- 
+    //perhaps add neighbor candidates to a list as the method recurses, then search the list, calculating
+    //the min "good neighbor" (somehow weights xy closeness and z closeness based on some parameters)
     public int getNearestNeighborId(Vector2f point) {
         LinkedList<int[]> points = new LinkedList<int[]>();
         points.add(new int[] {(int)point.getX(), (int)point.getY()});
-        return getNearestNeighborId(points, new boolean[idBuffer.length][idBuffer[0].length], MAX_NEIGHBORHOOD_SEARCH_DISTANCE);
+        LinkedList<Integer> nearestNeighbors = new LinkedList<Integer>();
+        getNearestNeighborIds(points, new boolean[idBuffer.length][idBuffer[0].length], MAX_NEIGHBORHOOD_SEARCH_DISTANCE, nearestNeighbors);
+
+        
+        int minId = -1;
+        float minDistSqr = -1;
+        
+        for(int neighborId : nearestNeighbors) {
+            float distSqr = getWeightedNearestNeighborDistSquared(point, X[neighborId]);
+            if(minDistSqr < 0 || distSqr < minDistSqr) {
+                minDistSqr = distSqr;
+                minId = neighborId;
+            }
+        }
+        return minId;
     }
     
-    private int getNearestNeighborId(LinkedList<int[]> points, boolean[][] visited, int depthRemaining) {
-        if(points.size() <= 0 || depthRemaining <= 0) {
-            return -1;
+    private float getWeightedNearestNeighborDistSquared(Vector2f point, Vector3f p2) {
+        p2 = pointTransform.mult(p2);
+        Vector3f point3d = new Vector3f(point.getX(), point.getY(), cam.getFrustumNear());
+        return (float)(1*Math.pow(point3d.getX() - p2.getX(), 2) + 
+                    1*Math.pow(point3d.getY() - p2.getY(), 2) + 
+                    zDepthDistanceWeight*cam.distanceToNearPlane(p2));
+    }
+    
+    private void getNearestNeighborIds(LinkedList<int[]> points, boolean[][] visited, int depthRemaining, LinkedList<Integer> out) {
+        if(points.size() <= 0 || depthRemaining <= 0 || out.size() >= MAX_NEAREST_NEIGHBOR_CANDIDATES) {
+            //return -1;
+            return;
         }
-        
         LinkedList<int[]> childPoints = new LinkedList<int[]>();
         for(int[] point : points) {
-            if(idBuffer[point[0]][point[1]] != -1) return idBuffer[point[0]][point[1]];
+            if(idBuffer[point[0]][point[1]] != -1) {
+                //return idBuffer[point[0]][point[1]];
+                out.add(idBuffer[point[0]][point[1]]);
+            }
             visited[point[0]][point[1]] = true;
         }
         for(int[] point : points) {
             childPoints.addAll(getNeighbors(point, visited));
         }
-        return getNearestNeighborId(childPoints, visited, depthRemaining - 1);
+        getNearestNeighborIds(childPoints, visited, depthRemaining - 1, out);
     }
     
     
@@ -97,6 +123,7 @@ public class BFSNearestNeighborSearch implements Runnable {
     }
     
     private void resetIdBuffer() {
+        this.idBuffer = new int[cam.getWidth()][cam.getHeight()];
         for(int i = 0; i < idBuffer.length; i++){
             for(int j = 0; j < idBuffer[i].length; j++) {
                 idBuffer[i][j] = -1;

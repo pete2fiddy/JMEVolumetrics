@@ -46,6 +46,11 @@ public class PointCloud implements Updatable {
     
     private Camera cam;
     
+    
+    /*
+    PROBLEM: Particles not zbuffered? (if a point is large and white, and in front of others behind it, the others can be seen
+    on top of it)
+    */
     /*
     
     Code mostly copy-pasted from Ogli's source here: 
@@ -64,7 +69,7 @@ public class PointCloud implements Updatable {
         initPointMesh();
         initCloudGeom();
         cloudNode.attachChild(cloudGeom);
-        this.nnSearch = new BFSNearestNeighborSearch(cam, points, 1366, 768);
+        this.nnSearch = new BFSNearestNeighborSearch(cam, points);
     }
     
     public void enableNNSearchThread(boolean b) {

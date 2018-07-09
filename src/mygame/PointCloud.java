@@ -31,10 +31,11 @@ import mygame.util.PointUtils;
  */
 public class PointCloud implements Updatable {
     private AssetManager assetManager;
-    private Vector3f[] points;
+    private final Vector3f[] points;
     private ColorRGBA[] colors;
     private float[] sizes;
-    private KMeansSearchTree pointSearchTree;
+    //private KMeansSearchTree pointSearchTree;
+    private final BFSNearestNeighborSearch nnSearch;
     
     private Node cloudNode = new Node();
     private Material pointMat;
@@ -42,28 +43,41 @@ public class PointCloud implements Updatable {
     private Geometry cloudGeom;
     
     private boolean doUpdateColors = true, doUpdatePoints = true, doUpdateSizes = true;
-        
+    
+    private Camera cam;
+    
     /*
+    
     Code mostly copy-pasted from Ogli's source here: 
     https://hub.jmonkeyengine.org/t/how-to-create-a-mesh-from-cloud-points/17290/9
     See thread for hints about how to further optimize, but currently it can pretty easily handle 
     ~3 million points
     */
-    public PointCloud(AssetManager assetManager, Vector3f[] points, ColorRGBA[] colors, float[] sizes) {
+    public PointCloud(AssetManager assetManager, Camera cam, Vector3f[] points, ColorRGBA[] colors, float[] sizes) {
         this.assetManager = assetManager;
         this.points = points;
         this.colors = colors;
         this.sizes = sizes;
-        this.pointSearchTree = new KMeansSearchTree(this.points);
-        this.pointSearchTree.fit(5, 20, 100);
+        this.cam = cam;
         
         initPointMat();
         initPointMesh();
         initCloudGeom();
         cloudNode.attachChild(cloudGeom);
+        this.nnSearch = new BFSNearestNeighborSearch(cam, points, 1366, 768);
     }
     
-    public static PointCloud initWithFixedColorAndSize(AssetManager assetManager, Vector3f[] points, 
+    public void enableNNSearchThread(boolean b) {
+        this.nnSearch.setDoUpdate(b);
+        if(b) {
+            Thread t = new Thread(this.nnSearch);
+            //with JME, threads must be daemon or else they will not close when application is closed
+            t.setDaemon(true);
+            t.start();
+        }
+    }
+    
+    public static PointCloud initWithFixedColorAndSize(AssetManager assetManager, Camera cam, Vector3f[] points, 
             ColorRGBA color, float size){
         float[] sizes = new float[points.length];
         ColorRGBA[] colors = new ColorRGBA[points.length];
@@ -71,7 +85,7 @@ public class PointCloud implements Updatable {
             sizes[i] = size;
             colors[i] = color;
         }
-        return new PointCloud(assetManager, points, colors, sizes);
+        return new PointCloud(assetManager, cam, points, colors, sizes);
     }
     
     private void initPointMat(){
@@ -106,10 +120,6 @@ public class PointCloud implements Updatable {
         doUpdateColors = true;
     }
     
-    public void setPoint(int index, Vector3f point) {
-        this.points[index] = point;
-        doUpdatePoints = true;
-    }
     
     public void setSize(int index, float size) {
         this.sizes[index] = size;
@@ -120,11 +130,10 @@ public class PointCloud implements Updatable {
     public int numPoints(){return points.length;}
     
     
-    public int getNearestScreenNeighborId(Vector2f point, Camera cam) {
-        return pointSearchTree.getNearestScreenNeighborId(point, 
-                cloudNode.getWorldTransform().toTransformMatrix(), cam);
-        //return PointUtils.getNearestScreenNeighborId(points, point, 
-        //    cloudNode.getWorldTransform().toTransformMatrix(), cam);
+    public int getNearestScreenNeighborId(Vector2f point) {
+        return nnSearch.getNearestNeighborId(point);
+        //return pointSearchTree.getNearestScreenNeighborId(point, 
+        //        cloudNode.getWorldTransform().toTransformMatrix(), cam);
     }
     
     
@@ -148,12 +157,18 @@ public class PointCloud implements Updatable {
             doUpdateSizes = false;
         }
     }
+    
+    private void updateBFSCamAndTransform() {
+        nnSearch.setTransform(cloudNode.getWorldTransform().toTransformMatrix());
+    }
+    
 
     @Override
     public void update(float timePerFrame) {
         updatePointBuffer();
         updateColorBuffer();
         updateSizeBuffer();
+        updateBFSCamAndTransform();
     }
     
 }

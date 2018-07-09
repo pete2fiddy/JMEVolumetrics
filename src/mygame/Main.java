@@ -65,8 +65,9 @@ public class Main extends SimpleApplication {
         */
         
         
-        Vector3f[] points = generatePointsVec3f(1000000);
-        pointCloud = PointCloud.initWithFixedColorAndSize(assetManager, points, new ColorRGBA(1f,0f,0f,1f), 10f);
+        Vector3f[] points = generatePointsVec3f(100000);
+        pointCloud = PointCloud.initWithFixedColorAndSize(assetManager, cam, points, new ColorRGBA(1f,0f,0f,1f), 10f);
+        pointCloud.enableNNSearchThread(true);
         volCam.attachChildren(pointCloud.getCloudNode());
         pointCloud.getCloudNode().setLocalTranslation(0f,0f,0f);
         
@@ -87,11 +88,14 @@ public class Main extends SimpleApplication {
             pointCloud.setSize(i, (float)(Math.random() * 30));
         }*/
         long startTime = System.nanoTime();
-        int closestPointId = pointCloud.getNearestScreenNeighborId(inputManager.getCursorPosition(), cam);
-        System.out.println("Point search time ms: " + Double.toString((double)(System.nanoTime() - startTime)/(1000000.0)));
-        pointCloud.setColor(closestPointId, ColorRGBA.White);
-        pointCloud.setSize(closestPointId, 50f);
-        pointCloud.update(tpf);
+        int closestPointId = pointCloud.getNearestScreenNeighborId(inputManager.getCursorPosition());
+        if(closestPointId != -1) {
+            System.out.println("Point search time ms: " + Double.toString((double)(System.nanoTime() - startTime)/(1000000.0)));
+            pointCloud.setColor(closestPointId, ColorRGBA.White);
+            pointCloud.setSize(closestPointId, 50f);
+            pointCloud.update(tpf);
+        }
+        
     }
     
     private FloatBuffer generatePoints(int nPoints){

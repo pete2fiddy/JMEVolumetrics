@@ -22,20 +22,15 @@ import com.jme3.scene.VertexBuffer;
 import com.jme3.scene.shape.Box;
 import com.jme3.util.BufferUtils;
 import java.nio.FloatBuffer;
-import mygame.util.MyBufferUtils;
-import mygame.util.PointUtils;
+import mygame.util.MyBufferUtil;
+import mygame.util.PointUtil;
 
-/**
- *
- * @author Owner
- */
+
 public class PointCloud implements Updatable {
     private AssetManager assetManager;
     private final Vector3f[] points;
     private ColorRGBA[] colors;
     private float[] sizes;
-    //private KMeansSearchTree pointSearchTree;
-    private final BFSNearestNeighborSearch nnSearch;
     
     private Node cloudNode = new Node();
     private Material pointMat;
@@ -69,28 +64,25 @@ public class PointCloud implements Updatable {
         initPointMesh();
         initCloudGeom();
         cloudNode.attachChild(cloudGeom);
-        this.nnSearch = new BFSNearestNeighborSearch(cam, points);
     }
     
-    public void enableNNSearchThread(boolean b) {
-        this.nnSearch.setDoUpdate(b);
-        if(b) {
-            Thread t = new Thread(this.nnSearch);
-            //with JME, threads must be daemon or else they will not close when application is closed
-            t.setDaemon(true);
-            t.start();
-        }
-    }
     
-    public static PointCloud initWithFixedColorAndSize(AssetManager assetManager, Camera cam, Vector3f[] points, 
+    public PointCloud(AssetManager assetManager, Camera cam, Vector3f[] points, 
             ColorRGBA color, float size){
-        float[] sizes = new float[points.length];
-        ColorRGBA[] colors = new ColorRGBA[points.length];
-        for(int i = 0; i < sizes.length; i++){
-            sizes[i] = size;
-            colors[i] = color;
+        this.sizes = new float[points.length];
+        this.colors = new ColorRGBA[points.length];
+        for(int i = 0; i < this.sizes.length; i++){
+            this.sizes[i] = size;
+            this.colors[i] = color;
         }
-        return new PointCloud(assetManager, cam, points, colors, sizes);
+        this.assetManager = assetManager;
+        this.points = points;
+        this.cam = cam;
+        
+        initPointMat();
+        initPointMesh();
+        initCloudGeom();
+        cloudNode.attachChild(cloudGeom);
     }
     
     private void initPointMat(){
@@ -133,38 +125,32 @@ public class PointCloud implements Updatable {
     
     public Node getCloudNode(){return cloudNode;}
     public int numPoints(){return points.length;}
-    
-    
-    public int getNearestScreenNeighborId(Vector2f point) {
-        return nnSearch.getNearestNeighborId(point);
-        //return pointSearchTree.getNearestScreenNeighborId(point, 
-        //        cloudNode.getWorldTransform().toTransformMatrix(), cam);
-    }
+    protected Camera getCam(){return cam;}
+    protected Vector3f[] getPoints(){return points;}
+    protected ColorRGBA getColor(int id) {return colors[id];}
+    protected float getSize(int id){return sizes[id];}
+    protected Vector3f getPoint(int id){return points[id];}
     
     
     private void updatePointBuffer() {
         if(doUpdatePoints) {
-            pointMesh.setBuffer(VertexBuffer.Type.Position, 3, MyBufferUtils.createPointsBuffer(points));
+            pointMesh.setBuffer(VertexBuffer.Type.Position, 3, MyBufferUtil.createPointsBuffer(points));
             doUpdatePoints = false;
         }
     }
     
     private void updateColorBuffer() {
         if(doUpdateColors) {
-            pointMesh.setBuffer(VertexBuffer.Type.Color, 4, MyBufferUtils.createColorBuffer(colors));
+            pointMesh.setBuffer(VertexBuffer.Type.Color, 4, MyBufferUtil.createColorBuffer(colors));
             doUpdateColors = false;
         }
     }
     
     private void updateSizeBuffer() {
         if(doUpdateSizes) {
-            pointMesh.setBuffer(VertexBuffer.Type.Size, 1, MyBufferUtils.createFloatBuffer(sizes));
+            pointMesh.setBuffer(VertexBuffer.Type.Size, 1, MyBufferUtil.createFloatBuffer(sizes));
             doUpdateSizes = false;
         }
-    }
-    
-    private void updateBFSCamAndTransform() {
-        nnSearch.setTransform(cloudNode.getWorldTransform().toTransformMatrix());
     }
     
 
@@ -173,7 +159,6 @@ public class PointCloud implements Updatable {
         updatePointBuffer();
         updateColorBuffer();
         updateSizeBuffer();
-        updateBFSCamAndTransform();
     }
     
 }

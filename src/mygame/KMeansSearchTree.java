@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.ListIterator;
 import mygame.ml.JMEKMeans;
 import mygame.ml.KMeans;
-import mygame.util.PointUtils;
+import mygame.util.PointUtil;
 import org.jblas.DoubleMatrix;
 
 /**
@@ -79,20 +79,20 @@ public class KMeansSearchTree {
         */
         public Vector3f getNearestNeighbor(Vector3f pretransformedPoint) {
             if(isLeaf()) {
-                int nearestLeafPointId = PointUtils.getNearestNeighborId(leafPoints, pretransformedPoint);
+                int nearestLeafPointId = PointUtil.getNearestNeighborId(leafPoints, pretransformedPoint);
                 return leafPoints[nearestLeafPointId];
             }
-            int nearestCentroidId = PointUtils.getNearestNeighborId(childCentroids, pretransformedPoint);
+            int nearestCentroidId = PointUtil.getNearestNeighborId(childCentroids, pretransformedPoint);
             return children[nearestCentroidId].getNearestNeighbor(pretransformedPoint);
         }
         
         public Vector3f getNearestScreenNeighbor(Vector2f point, Matrix4f treePretransformMat, Camera cam) {
             if(isLeaf()) {
-                int nearestLeafPointId = PointUtils.getNearestScreenNeighborId(leafPoints, point, 
+                int nearestLeafPointId = PointUtil.getNearestScreenNeighborId(leafPoints, point, 
                         treePretransformMat, cam);
                 return leafPoints[nearestLeafPointId];
             }
-            int nearestCentroidId = PointUtils.getNearestScreenNeighborId(childCentroids, point,
+            int nearestCentroidId = PointUtil.getNearestScreenNeighborId(childCentroids, point,
                     treePretransformMat, cam);
             return children[nearestCentroidId].getNearestScreenNeighbor(point, treePretransformMat, cam);
         }

@@ -1,5 +1,6 @@
 package mygame;
 
+import mygame.input.VolumetricsCamera;
 import com.jme3.app.SimpleApplication;
 import com.jme3.font.BitmapText;
 import com.jme3.light.DirectionalLight;
@@ -13,6 +14,8 @@ import com.jme3.scene.shape.Box;
 import com.jme3.texture.Texture;
 import com.jme3.util.BufferUtils;
 import java.nio.FloatBuffer;
+import mygame.ml.JMEEuclidianSimilarity;
+import mygame.ml.JMEKMeansClusterer;
 import mygame.ml.KMeans;
 import org.jblas.DoubleMatrix;
 
@@ -32,7 +35,7 @@ public class Main extends SimpleApplication {
     
     
     private VolumetricsCamera volCam;
-    private PointCloud pointCloud;
+    private InteractivePointCloud pointCloud;
     //see: https://wiki.jmonkeyengine.org/jme3/beginner/hello_material.html
     //for more info about transparent/non-opaque textures
     
@@ -65,9 +68,12 @@ public class Main extends SimpleApplication {
         */
         
         
-        Vector3f[] points = generateSpheresVec3f(500000, new Vector3f[] {Vector3f.ZERO, new Vector3f(3f, -3f, 5f)}, 
+        Vector3f[] points = generateSpheresVec3f(50000, new Vector3f[] {Vector3f.ZERO, new Vector3f(3f, -3f, 5f)}, 
                 new float[] {2f, 3f});
-        pointCloud = PointCloud.initWithFixedColorAndSize(assetManager, cam, points, new ColorRGBA(1f,0f,0f,1f), 10f);
+        pointCloud = new InteractivePointCloud(assetManager, cam, points, new ColorRGBA(1f,0f,0f,1f), 10f, 
+                inputManager,
+                new JMEKMeansClusterer(10, 10), 
+                new JMEEuclidianSimilarity());
         pointCloud.enableNNSearchThread(true);
         volCam.attachChildren(pointCloud.getCloudNode());
         pointCloud.getCloudNode().setLocalTranslation(0f,0f,0f);
@@ -88,14 +94,19 @@ public class Main extends SimpleApplication {
             (float)Math.random()));
             pointCloud.setSize(i, (float)(Math.random() * 30));
         }*/
+        
+        /*
         long startTime = System.nanoTime();
         int closestPointId = pointCloud.getNearestScreenNeighborId(inputManager.getCursorPosition());
         if(closestPointId != -1) {
             System.out.println("Point search time ms: " + Double.toString((double)(System.nanoTime() - startTime)/(1000000.0)));
             pointCloud.setColor(closestPointId, ColorRGBA.White);
             pointCloud.setSize(closestPointId, 50f);
-            pointCloud.update(tpf);
         }
+        */
+        
+        pointCloud.update(tpf);
+        
         
     }
     

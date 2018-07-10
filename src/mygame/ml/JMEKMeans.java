@@ -56,6 +56,18 @@ public class JMEKMeans {
         return clusters;
     }
     
+    public static LinkedList<Integer>[] assignIdsToClusters(Vector3f[] centroids, Vector3f[] X) {
+        LinkedList<Integer>[] clusters = new LinkedList[centroids.length];
+        for(int i = 0; i < clusters.length; i++) {
+            clusters[i] =  new LinkedList<Integer>();
+        }
+        for(int i = 0; i < X.length; i++) {
+            int minCentroidId = getMinDistCentroidId(centroids, X[i]);
+            clusters[minCentroidId].add(i);
+        }
+        return clusters;
+    }
+    
     
     
     public static int getMinDistCentroidId(Vector3f[] centroids, Vector3f x) {

@@ -6,7 +6,9 @@
 package mygame.ml;
 
 import com.jme3.math.Vector3f;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  *
@@ -28,8 +30,16 @@ public class JMEKMeansClusterer implements CentroidClusterer <Vector3f> {
     }
 
     @Override
-    public int[][] clusterIds(Vector3f[] centroids, Vector3f[] data) {
+    public Map<Integer, Integer> clusterIds(Vector3f[] centroids, Vector3f[] data) {
         LinkedList<Integer>[] clusterLists = JMEKMeans.assignIdsToClusters(centroids, data);
+        HashMap<Integer, Integer> out = new HashMap<Integer, Integer>();
+        for(int i = 0; i < clusterLists.length; i++) {
+            for(int id : clusterLists[i]) {
+                out.put(id,i);
+            }
+        }
+        return out;
+        /*
         int[][] clusters = new int[clusterLists.length][];
         for(int i = 0; i < clusters.length; i++) {
             clusters[i] = new int[clusterLists[i].size()];
@@ -40,5 +50,6 @@ public class JMEKMeansClusterer implements CentroidClusterer <Vector3f> {
             }
         }
         return clusters;
+        */
     }
 }

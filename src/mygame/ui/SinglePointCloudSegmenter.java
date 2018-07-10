@@ -37,7 +37,7 @@ public class SinglePointCloudSegmenter implements Segmenter {
             segmentIds = new HashSet<Integer>();
             return (Set<Integer>)segmentIds.clone();
         }
-        int nearestNeighborId = pointCloud.getNearestScreenNeighborId(toolInput.getSelectPos());
+        int nearestNeighborId = pointCloud.getNearestScreenNeighborId(toolInput.getCursorPos());
         if(nearestNeighborId >= 0) {
             segmentIds.add(nearestNeighborId);
         }

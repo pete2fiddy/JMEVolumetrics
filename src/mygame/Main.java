@@ -14,8 +14,9 @@ import com.jme3.scene.shape.Box;
 import com.jme3.texture.Texture;
 import com.jme3.util.BufferUtils;
 import java.nio.FloatBuffer;
-import mygame.ml.JMEEuclidianSimilarity;
+import mygame.ml.JMEInvEuclidianSimilarity;
 import mygame.ml.JMEKMeansClusterer;
+import mygame.ml.JMERadialBasisSimilarity;
 import mygame.ml.KMeans;
 import org.jblas.DoubleMatrix;
 
@@ -38,7 +39,15 @@ public class Main extends SimpleApplication {
     private InteractivePointCloud pointCloud;
     //see: https://wiki.jmonkeyengine.org/jme3/beginner/hello_material.html
     //for more info about transparent/non-opaque textures
+    /*
+    TODO: 
     
+    Add a segmenter that segments based on relatively constant curvature
+    
+    Add a segmenter that grows a radius when user drags
+    
+    Add a paint brush sugmenter
+    */
     /*
     Notes: if wanted a first person camera, create a camera position node, then attach a rotation node as its parent. Then rotate the rotation node to rotate
     about camera pos, and translate the camera position mode to translate everything. Attach all things to be transformed to the camera position node
@@ -49,31 +58,13 @@ public class Main extends SimpleApplication {
         volCam = new VolumetricsCamera(inputManager);
         volCam.attachCamera(rootNode);
         
-        /*
-        DoubleMatrix doubleMatPoints = generateDoubleMatrixPoints(100);
-        DoubleMatrix centroids = KMeans.calcKMeansCentroids(doubleMatPoints, 1000, 50);
-        System.out.println("centroids: " + centroids);
-        */
         
-        /*
-        Box cube1Mesh = new Box(1f,1f,1f);
-        Geometry cube1Geo = new Geometry("Textured cube 1", cube1Mesh);
-        cube1Geo.setLocalTranslation(0f,0f,0f);
-        Material cube1Mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        Texture cube1Tex = assetManager.loadTexture("Textures/BrickTexture.jpg");
-        cube1Mat.setTexture("ColorMap", cube1Tex);
-        cube1Geo.setMaterial(cube1Mat);
-        
-        volCam.attachChildren(cube1Geo);
-        */
-        
-        
-        Vector3f[] points = generateSpheresVec3f(50000, new Vector3f[] {Vector3f.ZERO, new Vector3f(3f, -3f, 5f)}, 
+        Vector3f[] points = generateSpheresVec3f(100000, new Vector3f[] {Vector3f.ZERO, new Vector3f(3f, -3f, 5f)}, 
                 new float[] {2f, 3f});
         pointCloud = new InteractivePointCloud(assetManager, cam, points, new ColorRGBA(1f,0f,0f,1f), 10f, 
                 inputManager,
-                new JMEKMeansClusterer(10, 10), 
-                new JMEEuclidianSimilarity());
+                new JMEKMeansClusterer(1000, 10), 
+                new JMERadialBasisSimilarity());
         pointCloud.enableNNSearchThread(true);
         volCam.attachChildren(pointCloud.getCloudNode());
         pointCloud.getCloudNode().setLocalTranslation(0f,0f,0f);
@@ -84,30 +75,8 @@ public class Main extends SimpleApplication {
     /* Use the main event loop to trigger repeating actions. */
     @Override
     public void simpleUpdate(float tpf) {
-        // make the player rotate:
-        //player.rotate(0, 2*tpf, 0);
         volCam.update(tpf);
-        /*for(int i = 0; i < pointCloud.numPoints(); i++) {
-            pointCloud.setColor(i, new ColorRGBA((float)Math.random(),
-            (float)Math.random(),
-            (float)Math.random(),
-            (float)Math.random()));
-            pointCloud.setSize(i, (float)(Math.random() * 30));
-        }*/
-        
-        /*
-        long startTime = System.nanoTime();
-        int closestPointId = pointCloud.getNearestScreenNeighborId(inputManager.getCursorPosition());
-        if(closestPointId != -1) {
-            System.out.println("Point search time ms: " + Double.toString((double)(System.nanoTime() - startTime)/(1000000.0)));
-            pointCloud.setColor(closestPointId, ColorRGBA.White);
-            pointCloud.setSize(closestPointId, 50f);
-        }
-        */
-        
         pointCloud.update(tpf);
-        
-        
     }
     
     private Vector3f[] generateCubeVec3f(int nPoints) {

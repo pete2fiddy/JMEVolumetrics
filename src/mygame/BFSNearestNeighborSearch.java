@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package mygame;
 
 import com.jme3.math.Matrix4f;
@@ -21,7 +16,7 @@ import mygame.util.PointUtil;
 public class BFSNearestNeighborSearch implements Runnable {
     protected Camera cam;
     protected Vector3f[] X;
-    private int[][] idBuffer;
+    private volatile int[][] idBuffer;
     protected Matrix4f pointTransform = Matrix4f.IDENTITY;
     private volatile boolean doUpdate = true;
     
@@ -29,7 +24,7 @@ public class BFSNearestNeighborSearch implements Runnable {
     public BFSNearestNeighborSearch(Camera cam, Vector3f[] X) {
         this.cam = cam;
         this.X = X;
-        resetIdBuffer();
+        updateIdBuffer();
     }
     
     public Set<Integer> getNearestNeighborIds(int[] searchPoint, int depthToSearch) {
@@ -49,8 +44,9 @@ public class BFSNearestNeighborSearch implements Runnable {
         LinkedList<int[]> searchPointsNeighbors = new LinkedList<int[]>();
         for(int[] searchPoint : searchPoints) {
             visitedPixels[searchPoint[0]][searchPoint[1]] = true;
-            if(idBuffer[searchPoint[0]][searchPoint[1]] != -1) {
-                foundPoints.add(idBuffer[searchPoint[0]][searchPoint[1]]);
+            int idAtSearchPoint = idBuffer[searchPoint[0]][searchPoint[1]];
+            if(idAtSearchPoint != -1) {
+                foundPoints.add(idAtSearchPoint);
             }
 
             //add all 8 points to use euclidian instead of manhattan distance nearest neighbor
@@ -74,31 +70,28 @@ public class BFSNearestNeighborSearch implements Runnable {
         getNearestNeighborIds(searchPointsNeighbors, foundPoints, depthRemaining-1, visitedPixels);
     }
     
-    private void resetIdBuffer() {
-        idBuffer = new int[cam.getWidth()][cam.getHeight()];
-        ArrayUtil.fill2d(idBuffer, -1);
-        
-    }
     
     private void updateIdBuffer() {
-        resetIdBuffer();
+        int[][] tempIdBuffer = new int[cam.getWidth()][cam.getHeight()];
+        ArrayUtil.fill2d(tempIdBuffer, -1);
         for(int i = 0; i < X.length; i++) {
             Vector3f xWorldTransformed = pointTransform.mult(X[i], null);
             Vector3f xScreenPos = cam.getScreenCoordinates(xWorldTransformed);
             assert(xScreenPos.getZ() == cam.distanceToNearPlane(xWorldTransformed));
             int pixelX = (int)xScreenPos.getX();
             int pixelY = (int)xScreenPos.getY();
-            if(ArrayUtil.inBounds(idBuffer, pixelX, pixelY)) {
-                if(idBuffer[pixelX][pixelY] == -1) {
-                    idBuffer[pixelX][pixelY] = i;
+            if(ArrayUtil.inBounds(tempIdBuffer, pixelX, pixelY)) {
+                if(tempIdBuffer[pixelX][pixelY] == -1) {
+                    tempIdBuffer[pixelX][pixelY] = i;
                 } else {
-                    float samePixelPointDepth = cam.distanceToNearPlane(pointTransform.mult(X[idBuffer[pixelX][pixelY]], null));
+                    float samePixelPointDepth = cam.distanceToNearPlane(pointTransform.mult(X[tempIdBuffer[pixelX][pixelY]], null));
                     if(xScreenPos.getZ() < samePixelPointDepth) {
-                        idBuffer[pixelX][pixelY] = i;
+                        tempIdBuffer[pixelX][pixelY] = i;
                     }
                 }
             }
         }
+        idBuffer = tempIdBuffer;
     }
     
     public void setDoUpdate(boolean b) {doUpdate = b;}

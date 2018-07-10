@@ -9,12 +9,15 @@ import com.jme3.renderer.Camera;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
 import mygame.input.VolumetricToolInput;
 import mygame.ml.CentroidClusterer;
 import mygame.ml.Segmenter;
 import mygame.ml.SimilarityMetric;
+import mygame.ui.SimilarityThresholdedFloodfillCloudSegmenter;
 import mygame.ui.SinglePointCloudSegmenter;
+import mygame.ui.SphericalPaintBrushPointCloudSegmenter;
 import mygame.util.GraphUtil;
 import org.jblas.DoubleMatrix;
 
@@ -24,7 +27,7 @@ public class InteractivePointCloud extends PointCloud {
     private CentroidClusterer<Vector3f> centroidClusterer;
     private SimilarityMetric<Vector3f> simMetric;
     private Vector3f[] centroids;
-    private int[][] clusteredIds;
+    private Map<Integer, Integer> idToClusterMap;
     private DoubleMatrix simGraph;
     private final PointSelectBFSNearestNeighborSearch nnSearch;
     private VolumetricToolInput toolInput;
@@ -41,7 +44,7 @@ public class InteractivePointCloud extends PointCloud {
         this.nnSearch = new PointSelectBFSNearestNeighborSearch(cam, points);
         this.toolInput = new VolumetricToolInput(inputManager);
         this.setClusteringMethod(centroidClustererIn, similarityMetricIn);
-        this.pointSegmenter = new SinglePointCloudSegmenter(this, toolInput);
+        this.pointSegmenter = new SphericalPaintBrushPointCloudSegmenter(this, getPoints(), centroids, idToClusterMap, toolInput);//new SimilarityThresholdedFloodfillCloudSegmenter(this, toolInput, idToClusterMap);//new SinglePointCloudSegmenter(this, toolInput);
     }
     
     public InteractivePointCloud(AssetManager assetManager, Camera cam, Vector3f[] points, ColorRGBA color, float size,
@@ -50,7 +53,7 @@ public class InteractivePointCloud extends PointCloud {
         this.nnSearch = new PointSelectBFSNearestNeighborSearch(cam, points);
         this.toolInput = new VolumetricToolInput(inputManager);
         this.setClusteringMethod(centroidClustererIn, similarityMetricIn);
-        this.pointSegmenter = new SinglePointCloudSegmenter(this, toolInput);
+        this.pointSegmenter = new SphericalPaintBrushPointCloudSegmenter(this, getPoints(), centroids, idToClusterMap, toolInput);//new SimilarityThresholdedFloodfillCloudSegmenter(this, toolInput, idToClusterMap);//new SinglePointCloudSegmenter(this, toolInput);
     }
     
     public void enableNNSearchThread(boolean b) {
@@ -74,16 +77,17 @@ public class InteractivePointCloud extends PointCloud {
     }
     
     
-    
     public void setClusteringMethod(CentroidClusterer<Vector3f> centroidClusterer, SimilarityMetric<Vector3f> similarityMetric) {
         this.centroidClusterer = centroidClusterer;
         this.simMetric = similarityMetric;
         centroids = centroidClusterer.getClusterCentroids(getPoints());
-        clusteredIds = centroidClusterer.clusterIds(centroids, getPoints());
+        idToClusterMap = centroidClusterer.clusterIds(centroids, getPoints());
         simGraph = GraphUtil.constructSimilarityGraph(centroids, simMetric);
     }
     
-    @Override
+    
+    
+    @Override        
     public void update(float timePerFrame) {
         super.update(timePerFrame);
         updateBFSCamAndTransform();

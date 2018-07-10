@@ -63,11 +63,10 @@ public class VolumetricToolInput implements Updatable {
     
     public boolean getIfDiscreteAction(String actionName) {return discreteActionStates.get(actionName);}
     public Vector2f getSelectPos() {return lastSelectPos;}
+    public Vector2f getCursorPos() {return inputManager.getCursorPosition();}
     
     @Override
     public void update(float timePerFrame) {
-        if(discreteActionStates.get("SELECT_TOGGLE")) {
-            lastSelectPos = inputManager.getCursorPosition().clone();
-        }
+        //nothing to doyet
     }
 }

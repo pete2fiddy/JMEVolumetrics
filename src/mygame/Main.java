@@ -39,32 +39,29 @@ public class Main extends SimpleApplication {
     //see: https://wiki.jmonkeyengine.org/jme3/beginner/hello_material.html
     //for more info about transparent/non-opaque textures
     /*
-    TODO: 
     
-    MODIFY PAINT BRUSH SEARCHING TO FIRST SEARCH FOR INITIAL POINT USING BFS, THEN SEARCH FOR THE REST USING A NORMAL,
-    NONTRANSFORMABLE KDTREE!!!
+    Organization":
+    Create KDTree (abstract), then extend it with JblasKDTree (confusing to pass around Jblas trees in places where Vector3fs are used,
+    even though it works fine after fitting, since does everything in terms of ids)
     
-    Use idBuffer -- instead of cycling through all points -- for stuff like the spherical paint brush segmenter (reduce all points into a subset of those
-    that appear near the center point in the idBuffer, then do the same comparisons as now but on that severely restricted subset)
+    Don't pass around kdTree to segmenters, add methods to pointCloud that let you get nearest neighbors? (maybe not, there are a lot of things the KDTree can do...)
+    
+    Utilities that require centroid clusterers generally very often do not need a centroid clusterer, only to know
+    a map between points to cluster id... Either change name, or somehow remove dependency on centroids altogether
+    for the majority of applications that don't need them
+    
     
     similarity metric compatiability with certain segmenters is hard to tell without looking at code (for example,
     constructing a distance weighted graph requires a JME metric and a JBlas metric)
+    
+    TODO: 
+    
     
     Somehow modify pointcloud and BFSNearestNeighborSearch so they can sensibly buffer together, and allows pointcloud to track which points are visible on screen
     during the construction of the idBuffer. Then the set of points visible can be used to remove invisible points from computation during segmentation, etc. (not sure
     how useful this actually ends up being?)
     
-    Add a segmenter that segments based on relatively constant curvature (clicking and dragging segments flat walls, etc.) (note this is actually accomplishable
-    by passing a graph to SimilarityTHresholdedFloodfillCloudSegmenter with a simGraph where each edge represents the similarity of CURVATURE between two centroids.
-    I assume it would work especially well with a clustering algorithm that specifically looks for constant curvature within space)
-    
-    Add a paintbrush that does not let you "paint outside of the lines" (meaning you can't paint into another area with a major difference in curvature
-    without releasing and starting a new stroke in that area)
-    
-    
     Add a segmenter that grows a radius when user drags
-    
-    Add a flat paint brush segmenter
     
     (Eventually...) create the model-to-cloud-fit algorithm
     */
@@ -79,7 +76,7 @@ public class Main extends SimpleApplication {
         volCam.attachCamera(rootNode);
         
         
-        Vector3f[] points = generateSpheresVec3f(10000, new Vector3f[] {Vector3f.ZERO, new Vector3f(3f, -3f, 5f)}, 
+        Vector3f[] points = generateSpheresVec3f(100000, new Vector3f[] {Vector3f.ZERO, new Vector3f(3f, -3f, 5f)}, 
                 new float[] {2f, 3f});
         
         pointCloud = new InteractivePointCloud(assetManager, cam, points, new ColorRGBA(1f,0f,0f,1f), 10f, 
@@ -88,36 +85,11 @@ public class Main extends SimpleApplication {
         volCam.attachChildren(pointCloud.getCloudNode());
         pointCloud.getCloudNode().setLocalTranslation(0f,0f,0f);
         
-        
-        DoubleMatrix jblasPoints = DoubleMatrix.zeros(points.length, 3);
-        for(int i = 0; i < jblasPoints.rows; i++) {
-            jblasPoints.putRow(i, new DoubleMatrix(new double[][] {{points[i].x, points[i].y, points[i].z}}));
-        }
-        
-        DoubleMatrix pointNormals = CloudNormal.getUnorientedPCANormals(jblasPoints, 15);
-        
-        
-        
-        
-        
+        /*
+        DoubleMatrix pointNormals = CloudNormal.getUnorientedPCANormals(JblasJMEConverter.toDoubleMatrix(points), 15);
         LineCloud lineCloud = new LineCloud(assetManager, points, JblasJMEConverter.toVector3f(pointNormals), .25f);
         volCam.attachChildren(lineCloud.getCloudNode());
-        /*
-        float lineMagnitude = .25f;
-        Geometry[] lineGeoms = new Geometry[pointNormals.rows];
-        for(int i = 0; i < pointNormals.rows; i++) {
-            Vector3f start = points[i];
-            Vector3f end = start.add((new Vector3f((float)pointNormals.get(i,0), 
-            (float)pointNormals.get(i,1),
-            (float)pointNormals.get(i,2))).mult(lineMagnitude));
-            Line l = new Line(start, end);
-            lineGeoms[i] = new Geometry("Line " + Integer.toString(i), l);
-            lineGeoms[i].setMaterial(new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md"));
-            volCam.attachChildren(lineGeoms[i]);
-        }
-        Line[] lineMeshes = new Line[pointNormals.rows];
         */
-        
     }
     
 
@@ -125,7 +97,7 @@ public class Main extends SimpleApplication {
     @Override
     public void simpleUpdate(float tpf) {
         volCam.update(tpf);
-        //pointCloud.update(tpf);
+        pointCloud.update(tpf);
     }
     
     private Vector3f[] generateCubesVec3f(int nPointsPerCube, Vector3f[] centers, float[] radiuses) {

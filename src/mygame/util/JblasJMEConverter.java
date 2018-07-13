@@ -14,7 +14,7 @@ import org.jblas.DoubleMatrix;
  */
 public class JblasJMEConverter {
     
-    public static DoubleMatrix toDoubleMatrix(Vector3f[] X) {
+    public static DoubleMatrix toDoubleMatrix(Vector3f... X) {
         double[][] doubleMatArr = new double[X.length][3];
         for(int i = 0; i < X.length; i++) {
             doubleMatArr[i] = new double[] {(double)X[i].x, (double)X[i].y, (double)X[i].z};

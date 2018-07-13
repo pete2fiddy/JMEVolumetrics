@@ -10,9 +10,11 @@ import com.jme3.math.Vector3f;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import mygame.data.search.JblasKDTree;
 import mygame.pointcloud.InteractivePointCloud;
 import mygame.input.VolumetricToolInput;
 import mygame.ml.Segmenter;
+import mygame.util.JblasJMEConverter;
 import mygame.util.SegmenterUtils;
 import org.jblas.DoubleMatrix;
 
@@ -21,25 +23,20 @@ import org.jblas.DoubleMatrix;
  * @author Owner
  */
 public class SphericalPaintBrushPointCloudSegmenter implements Segmenter {
-    protected final double CENTROID_RADIUS_SEARCH_SLACK_MULTIPLIER = 3;
     protected InteractivePointCloud pointCloud;
     protected VolumetricToolInput toolInput;
-    protected Map<Integer, Integer> idToClusterMap;
     protected Vector3f[] X;
-    protected Vector3f[] centroids;
     protected float brushRadius = 0.25f;
     Set<Integer>[] clusterSets;
     HashSet<Integer> segmentIds = new HashSet<Integer>();
+    private JblasKDTree kdTree;
     
-    public SphericalPaintBrushPointCloudSegmenter(InteractivePointCloud pointCloud,
-            Vector3f[] X, Vector3f[] centroids, Map<Integer, Integer> idToClusterMap, 
+    public SphericalPaintBrushPointCloudSegmenter(InteractivePointCloud pointCloud, Vector3f[] X, JblasKDTree kdTree, 
             VolumetricToolInput toolInput) {
+        this.X = X;
         this.pointCloud = pointCloud;
         this.toolInput = toolInput;
-        this.X = X;
-        this.centroids = centroids;
-        this.idToClusterMap = idToClusterMap;
-        this.clusterSets = SegmenterUtils.convertIntoClusterSets(idToClusterMap);
+        this.kdTree = kdTree;
     }
     
     
@@ -63,6 +60,8 @@ public class SphericalPaintBrushPointCloudSegmenter implements Segmenter {
     }
     /*simMatrix is passed for extensions to override how this method operates*/
     protected Set<Integer> getAllWithinRadius(DoubleMatrix simMatrix, int centerId, double radius) {
+        return kdTree.getIdsWithinRadius(JblasJMEConverter.toDoubleMatrix(X[centerId]), radius);
+        /*
         HashSet<Integer> out = new HashSet<Integer>();
         double radiusSqr = radius*radius;
         for(int i = 0; i < centroids.length; i++) {
@@ -75,5 +74,6 @@ public class SphericalPaintBrushPointCloudSegmenter implements Segmenter {
             }
         }
         return out;
+        */
     }
 }

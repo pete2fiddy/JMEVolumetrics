@@ -9,6 +9,7 @@ import com.jme3.math.Vector3f;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import mygame.data.search.JblasKDTree;
 import mygame.input.VolumetricToolInput;
 import mygame.pointcloud.InteractivePointCloud;
 import org.jblas.DoubleMatrix;
@@ -18,9 +19,11 @@ allows the user to paint so long as the points to be painted are similar enough 
 */
 public class SimilarityToSelectionPointPaintBrushCloudSegmenter extends SphericalPaintBrushPointCloudSegmenter {
     private double tolerance = .6;
+    private Map<Integer, Integer> idToClusterMap;
     
-    public SimilarityToSelectionPointPaintBrushCloudSegmenter(InteractivePointCloud pointCloud, Vector3f[] X, Vector3f[] centroids, Map<Integer, Integer> idToClusterMap, VolumetricToolInput toolInput) {
-        super(pointCloud, X, centroids, idToClusterMap, toolInput);
+    public SimilarityToSelectionPointPaintBrushCloudSegmenter(InteractivePointCloud pointCloud, Vector3f[] X, JblasKDTree kdTree, VolumetricToolInput toolInput, Map<Integer, Integer> idToClusterMap) {
+        super(pointCloud, X, kdTree, toolInput);
+        this.idToClusterMap = idToClusterMap;
     }
     
     

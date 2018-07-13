@@ -35,4 +35,8 @@ public class JblasKDTree {
     public int[] getNearestNeighborIds(DoubleMatrix searchPoint, int nNeighbors) {
         return head.getNNearestNeighborIds(X, searchPoint, nNeighbors);
     }
+    
+    public Set<Integer> getIdsWithinRadius(DoubleMatrix searchPoint, double radius) {
+        return head.getIdsWithinRadius(X, searchPoint, radius);
+    }
 }

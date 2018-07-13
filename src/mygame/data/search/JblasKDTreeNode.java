@@ -29,14 +29,14 @@ public class JblasKDTreeNode {
     
     protected boolean isLeaf() {return children == null;}
     
-    public Set<Integer> getPointsWithinRadius(DoubleMatrix X, DoubleMatrix searchPoint, double radius) {
+    public Set<Integer> getIdsWithinRadius(DoubleMatrix X, DoubleMatrix searchPoint, double radius) {
         Set<Integer> out = new HashSet<Integer>();
-        setPointsWithinRadius(X, searchPoint, radius, out);
+        setIdsWithinRadius(X, searchPoint, radius, out);
         return out;
     }
     
     
-    protected void setPointsWithinRadius(DoubleMatrix X, DoubleMatrix searchPoint, double radius, Set<Integer> inRadius) {
+    protected void setIdsWithinRadius(DoubleMatrix X, DoubleMatrix searchPoint, double radius, Set<Integer> inRadius) {
         if(isLeaf()) {
             if(isValueLeaf()) {
                 DoubleMatrix leafVec = X.getRow(leafId);
@@ -47,7 +47,7 @@ public class JblasKDTreeNode {
         }
         double[] childMinDists = regionsMinPossibleDistToPoint(searchPoint.toArray());
         for(int i = 0; i < childMinDists.length; i++) {
-            if(childMinDists[i] < radius) children[i].setPointsWithinRadius(X, searchPoint, radius, inRadius);
+            if(childMinDists[i] < radius) children[i].setIdsWithinRadius(X, searchPoint, radius, inRadius);
         }
     }
     

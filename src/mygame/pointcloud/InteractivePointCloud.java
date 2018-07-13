@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import mygame.PointSelectBFSNearestNeighborSearch;
+import mygame.data.search.JblasKDTree;
 import mygame.input.VolumetricToolInput;
 import mygame.ml.CurvatureSimilarityGraphConstructor;
 import mygame.ml.JMEInvEuclidianSimilarity;
@@ -23,6 +24,7 @@ import mygame.ui.SimilarityThresholdedFloodfillCloudSegmenter;
 import mygame.ui.SimilarityToSelectionPointPaintBrushCloudSegmenter;
 import mygame.ui.SphericalPaintBrushPointCloudSegmenter;
 import mygame.util.GraphUtil;
+import mygame.util.JblasJMEConverter;
 import mygame.util.SegmenterUtils;
 import org.jblas.DoubleMatrix;
 
@@ -41,7 +43,7 @@ public class InteractivePointCloud extends PointCloud {
     private VolumetricToolInput toolInput;
     private Segmenter pointSegmenter;
     private HashMap<Integer, CloudPoint> selectedPoints = new HashMap<Integer, CloudPoint>();
-    
+    private JblasKDTree kdTree;
     
     
     
@@ -69,12 +71,13 @@ public class InteractivePointCloud extends PointCloud {
     
     private void initInteractiveParams(InputManager inputManager) {
         this.nnSearch = new PointSelectBFSNearestNeighborSearch(cam, CloudPoint.extractPoints(points));
+        this.kdTree = new JblasKDTree(JblasJMEConverter.toDoubleMatrix(CloudPoint.extractPoints(points)));
         this.toolInput = new VolumetricToolInput(inputManager);
-        //this.pointSegmenter = new SphericalPaintBrushPointCloudSegmenter(this, CloudPoint.extractPoints(points), centroids, idToClusterMap, toolInput);
+        this.pointSegmenter = new SphericalPaintBrushPointCloudSegmenter(this, CloudPoint.extractPoints(points), kdTree, toolInput);
         //this.pointSegmenter = new SimilarityThresholdedFloodfillCloudSegmenter(this, toolInput, idToClusterMap);
         //this.pointSegmenter = new SimilarityToSelectionPointCloudSegmenter(this, toolInput, idToClusterMap);
         //this.pointSegmenter = new SinglePointCloudSegmenter(this, toolInput);
-        this.pointSegmenter = new SimilarityToSelectionPointPaintBrushCloudSegmenter(this, CloudPoint.extractPoints(points), centroids, idToClusterMap, toolInput);
+        //this.pointSegmenter = new SimilarityToSelectionPointPaintBrushCloudSegmenter(this, CloudPoint.extractPoints(points), kdTree, toolInput , idToClusterMap);
         activeSimGraph = curvatureSimGraph;//distWeightedCurvatureSimGraph;//proximitySimGraph;//
     }
     

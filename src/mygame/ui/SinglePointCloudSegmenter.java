@@ -9,8 +9,8 @@ import com.jme3.math.Vector3f;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import mygame.InteractivePointCloud;
-import mygame.PointCloud;
+import mygame.pointcloud.InteractivePointCloud;
+import mygame.pointcloud.PointCloud;
 import mygame.Updatable;
 import mygame.input.VolumetricToolInput;
 import mygame.ml.Segmenter;
@@ -32,14 +32,18 @@ public class SinglePointCloudSegmenter implements Segmenter {
     
     @Override
     public Set<Integer> getSegmentedIds(DoubleMatrix simMatrix) {
-        if(!toolInput.getIfDiscreteAction("SELECT_TOGGLE")) {
-           
-            segmentIds = new HashSet<Integer>();
-            return (Set<Integer>)segmentIds.clone();
+        if(toolInput.getIfDiscreteAction("SELECT_TOGGLE")) {
+            int nearestNeighborId = pointCloud.getNearestScreenNeighborId(toolInput.getCursorPos());
+            if(nearestNeighborId >= 0) {
+                if(toolInput.getIfDiscreteAction("ERASE_TOGGLE")) {
+                    segmentIds.remove(nearestNeighborId);
+                } else {
+                    segmentIds.add(nearestNeighborId);
+                }
+            }
         }
-        int nearestNeighborId = pointCloud.getNearestScreenNeighborId(toolInput.getCursorPos());
-        if(nearestNeighborId >= 0) {
-            segmentIds.add(nearestNeighborId);
+        if(toolInput.getIfDiscreteAction("CLEAR_TOGGLE")) {
+            segmentIds = new HashSet<Integer>();
         }
         return (Set<Integer>)segmentIds.clone();
     }

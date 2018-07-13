@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package mygame;
+package mygame.pointcloud;
 
 import com.jme3.asset.AssetManager;
 import com.jme3.material.Material;
@@ -22,24 +22,23 @@ import com.jme3.scene.VertexBuffer;
 import com.jme3.scene.shape.Box;
 import com.jme3.util.BufferUtils;
 import java.nio.FloatBuffer;
+import mygame.Updatable;
 import mygame.util.MyBufferUtil;
 import mygame.util.PointUtil;
 
 
 public class PointCloud implements Updatable {
     private AssetManager assetManager;
-    private final Vector3f[] points;
-    private ColorRGBA[] colors;
-    private float[] sizes;
+    protected CloudPoint[] points;
     
-    private Node cloudNode = new Node();
+    protected Node cloudNode = new Node();
     private Material pointMat;
     private Mesh pointMesh;
     private Geometry cloudGeom;
     
-    private boolean doUpdateColors = true, doUpdatePoints = true, doUpdateSizes = true;
+    private boolean doUpdatePoints = true, doUpdateSizes = true, doUpdateColors = true;
     
-    private Camera cam;
+    protected Camera cam;
     
     
     /*
@@ -53,30 +52,24 @@ public class PointCloud implements Updatable {
     See thread for hints about how to further optimize, but currently it can pretty easily handle 
     ~3 million points
     */
-    public PointCloud(AssetManager assetManager, Camera cam, Vector3f[] points, ColorRGBA[] colors, float[] sizes) {
+    public PointCloud(AssetManager assetManager, Camera cam, CloudPoint[] points) {
         this.assetManager = assetManager;
         this.points = points;
-        this.colors = colors;
-        this.sizes = sizes;
-        this.cam = cam;
         
         initPointMat();
         initPointMesh();
         initCloudGeom();
-        cloudNode.attachChild(cloudGeom);
+        cloudNode.attachChild(cloudNode);
     }
     
     
     public PointCloud(AssetManager assetManager, Camera cam, Vector3f[] points, 
             ColorRGBA color, float size){
-        this.sizes = new float[points.length];
-        this.colors = new ColorRGBA[points.length];
-        for(int i = 0; i < this.sizes.length; i++){
-            this.sizes[i] = size;
-            this.colors[i] = color;
+        this.points = new CloudPoint[points.length];
+        for(int i = 0; i < this.points.length; i++){
+            this.points[i] = new CloudPoint(points[i], color, size);
         }
         this.assetManager = assetManager;
-        this.points = points;
         this.cam = cam;
         
         initPointMat();
@@ -84,6 +77,47 @@ public class PointCloud implements Updatable {
         initCloudGeom();
         cloudNode.attachChild(cloudGeom);
     }
+    
+    
+    public void setPoint(int index, CloudPoint newPoint) {
+        if(!newPoint.color.equals(this.points[index].color)) doUpdateColors = true;
+        if(!newPoint.point.equals(this.points[index].point)) doUpdatePoints = true;
+        if(newPoint.size != this.points[index].size) doUpdateSizes = true;
+        this.points[index] = newPoint;
+    }
+    
+    @Override
+    public void update(float timePerFrame) {
+        if(doUpdatePoints) {
+            updatePointBuffer();
+            doUpdatePoints = false;
+        }
+        if(doUpdateColors) {
+            updateColorBuffer();
+            doUpdateColors = false;
+        }
+        if(doUpdateSizes) {
+            updateSizeBuffer();
+            doUpdateSizes = false;
+        }
+    }
+    
+    
+    protected void updatePointBuffer() {
+        pointMesh.setBuffer(VertexBuffer.Type.Position, 3, MyBufferUtil.createPointsBuffer(CloudPoint.extractPoints(points)));
+    }
+    
+    private void updateColorBuffer() {
+        pointMesh.setBuffer(VertexBuffer.Type.Color, 4, MyBufferUtil.createColorBuffer(CloudPoint.extractColors(points)));
+    }
+    
+    private void updateSizeBuffer() {
+        pointMesh.setBuffer(VertexBuffer.Type.Size, 1, MyBufferUtil.createFloatBuffer(CloudPoint.extractSizes(points)));
+    }
+    
+    public Node getCloudNode(){return cloudNode;}
+    public int numPoints(){return points.length;}
+    
     
     private void initPointMat(){
         pointMat = new Material(assetManager, "Common/MatDefs/Misc/Particle.j3md");
@@ -110,55 +144,6 @@ public class PointCloud implements Updatable {
         cloudGeom.setShadowMode(ShadowMode.Off);
         cloudGeom.setQueueBucket(Bucket.Opaque);
         cloudGeom.setMaterial(pointMat);
-    }
-    
-    public void setColor(int index, ColorRGBA color) {
-        this.colors[index] = color;
-        doUpdateColors = true;
-    }
-    
-    
-    public void setSize(int index, float size) {
-        this.sizes[index] = size;
-        doUpdateSizes = true;
-    }
-    
-    public Node getCloudNode(){return cloudNode;}
-    public int numPoints(){return points.length;}
-    protected Camera getCam(){return cam;}
-    protected Vector3f[] getPoints(){return points;}
-    protected ColorRGBA getColor(int id) {return colors[id];}
-    protected float getSize(int id){return sizes[id];}
-    protected Vector3f getPoint(int id){return points[id];}
-    
-    
-    private void updatePointBuffer() {
-        if(doUpdatePoints) {
-            pointMesh.setBuffer(VertexBuffer.Type.Position, 3, MyBufferUtil.createPointsBuffer(points));
-            doUpdatePoints = false;
-        }
-    }
-    
-    private void updateColorBuffer() {
-        if(doUpdateColors) {
-            pointMesh.setBuffer(VertexBuffer.Type.Color, 4, MyBufferUtil.createColorBuffer(colors));
-            doUpdateColors = false;
-        }
-    }
-    
-    private void updateSizeBuffer() {
-        if(doUpdateSizes) {
-            pointMesh.setBuffer(VertexBuffer.Type.Size, 1, MyBufferUtil.createFloatBuffer(sizes));
-            doUpdateSizes = false;
-        }
-    }
-    
-
-    @Override
-    public void update(float timePerFrame) {
-        updatePointBuffer();
-        updateColorBuffer();
-        updateSizeBuffer();
     }
     
 }

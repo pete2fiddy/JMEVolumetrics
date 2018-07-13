@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/ui/SphericalPaintBrushPointCloudSegmenter.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/ml/JblasCosineAngleSimilarityMetric.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/pointcloud/InteractivePointCloud.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/ui/SimilarityThresholdedFloodfillCloudSegmenter.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/input/VolumetricToolInput.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/ml/JblasPCA.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/util/GraphUtil.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/pointcloud/PointCloud.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/ml/CurvatureSimilarityGraphConstructor.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/Main.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/PointSelectBFSNearestNeighborSearch.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/ml/JMERadialBasisSimilarity.java</file>
+        </group>
+    </open-files>
 </project-private>

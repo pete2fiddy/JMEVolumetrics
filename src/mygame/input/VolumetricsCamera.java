@@ -13,6 +13,7 @@ import com.jme3.input.controls.AnalogListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.controls.MouseAxisTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
+import com.jme3.input.controls.Trigger;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector2f;
 import com.jme3.scene.Node;
@@ -26,6 +27,22 @@ import mygame.Updatable;
 
 
 public class VolumetricsCamera implements Updatable {
+    private static final String[] ANALOG_ACTION_NAMES = {"FORWARD", "BACKWARD", "LEFT", "RIGHT", 
+    "UP", "DOWN", "ZOOM_IN", "ZOOM_OUT"};
+    private static final Trigger[] DEFAULT_ANALOG_ACTION_TRIGGERS = {new KeyTrigger(KeyInput.KEY_W),
+        new KeyTrigger(KeyInput.KEY_S),
+        new KeyTrigger(KeyInput.KEY_D),
+        new KeyTrigger(KeyInput.KEY_A),
+        new KeyTrigger(KeyInput.KEY_SPACE),
+        new KeyTrigger(KeyInput.KEY_LSHIFT),
+        new MouseAxisTrigger(MouseInput.AXIS_WHEEL, false),
+        new MouseAxisTrigger(MouseInput.AXIS_WHEEL, true)};
+    
+    private static final String[] DISCRETE_ACTION_NAMES = {"ROTATE_TOGGLE", "DRAG_TOGGLE"};
+    private static final Trigger[] DEFAULT_DISCRETE_ACTION_TRIGGERS = {
+        new MouseButtonTrigger(MouseInput.BUTTON_RIGHT),
+        new MouseButtonTrigger(MouseInput.BUTTON_MIDDLE)};
+    
     private static final float MOVE_VELOCITY = 6f;
     private static final float ROTATE_VELOCITY_PER_PIXEL = 0.005f;
     private static final float SCALE_PER_NOTCH = 0.1f;
@@ -43,41 +60,35 @@ public class VolumetricsCamera implements Updatable {
         this.cameraNode = new VolumetricsCameraNode();
         //this.cameraNode.setLocalTranslation(0f,0f,0f);
         this.inputManager = inputManager;
-        initBindings();
         initMouseState();
-        addListeners();
+        addMappings();
+    }
+    
+    private void addMappings() {
+        for(int i = 0; i < DISCRETE_ACTION_NAMES.length; i++) {
+            addDiscreteMapping(DISCRETE_ACTION_NAMES[i], DEFAULT_DISCRETE_ACTION_TRIGGERS[i]);
+        }
+        for(int i = 0; i < ANALOG_ACTION_NAMES.length; i++) {
+            addAnalogMapping(ANALOG_ACTION_NAMES[i], DEFAULT_ANALOG_ACTION_TRIGGERS[i]);
+        }
+    }
+    
+    private void addDiscreteMapping(String actionName, Trigger trigger) {
+        inputManager.addMapping(actionName, trigger);
+        discreteActionStates.put(actionName, false);
+        inputManager.addListener(discreteActionListener, actionName);
         
     }
     
-    private void initBindings(){
-        inputManager.addMapping("FORWARD", new KeyTrigger(KeyInput.KEY_W));
-        inputManager.addMapping("BACKWARD", new KeyTrigger(KeyInput.KEY_S));
-        inputManager.addMapping("LEFT", new KeyTrigger(KeyInput.KEY_A));
-        inputManager.addMapping("RIGHT", new KeyTrigger(KeyInput.KEY_D));
-        inputManager.addMapping("UP", new KeyTrigger(KeyInput.KEY_SPACE));
-        inputManager.addMapping("DOWN", new KeyTrigger(KeyInput.KEY_LSHIFT));
-        
-        inputManager.addMapping("ZOOM_IN", new MouseAxisTrigger(MouseInput.AXIS_WHEEL, false));
-        inputManager.addMapping("ZOOM_OUT", new MouseAxisTrigger(MouseInput.AXIS_WHEEL, true));
-        
-        
-        inputManager.addMapping("ROTATE_TOGGLE", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
-        inputManager.addMapping("DRAG_TOGGLE", new MouseButtonTrigger(MouseInput.BUTTON_MIDDLE));
-        
+    private void addAnalogMapping(String actionName, Trigger trigger) {
+        inputManager.addMapping(actionName, trigger);
+        inputManager.addListener(continuousActionListener, actionName);
     }
     
     private void initMouseState(){
         discreteActionStates.put("ROTATE_TOGGLE", false);
         discreteActionStates.put("DRAG_TOGGLE", false);
     }
-    
-    private void addListeners(){
-        inputManager.addListener(continuousActionListener, "FORWARD", "BACKWARD", "LEFT", "RIGHT", "UP", "DOWN",
-                "ZOOM_IN", "ZOOM_OUT");
-        
-        inputManager.addListener(discreteActionListener, "ROTATE_TOGGLE", "DRAG_TOGGLE");
-    }
-    
     
     private final AnalogListener continuousActionListener = new AnalogListener() {
         @Override

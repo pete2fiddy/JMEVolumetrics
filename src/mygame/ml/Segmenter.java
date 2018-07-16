@@ -7,6 +7,8 @@ package mygame.ml;
 
 import java.util.List;
 import java.util.Set;
+import mygame.graph.Graph;
+import mygame.graph.SparseGraph;
 import org.jblas.DoubleMatrix;
 
 /**
@@ -17,5 +19,5 @@ public interface Segmenter {
     /*
     Uses the params of the implementer of Segmenter to return the ids of the segmented data 
     */
-    public Set<Integer> getSegmentedIds(DoubleMatrix simMatrix);
+    public Set<Integer> getSegmentedIds(Graph simGraph);
 }

@@ -6,7 +6,8 @@ import org.jblas.Eigen;
 public class JblasPCA {
     
     /*
-    output[0] is a matrix with principal components as columns, output[1] is a vector with eigenvalues for the corresponding principal components. Both are sorted by eigenvalue, 
+    output[0] is a matrix with principal components as columns (smallest to largest eigenvalue order),
+    output[1] is a Diagonal matrix with eigenvalues for the corresponding principal components. Both are sorted by eigenvalue, 
     smallest to largest.
     */
     public static DoubleMatrix[] getPrincipalComponents(DoubleMatrix X) {

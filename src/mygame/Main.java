@@ -41,6 +41,11 @@ public class Main extends SimpleApplication {
     /*
     
     Organization":
+    
+    Figure out how to segment, sensibly, between JBLAS and JME vectors. Irritating to keep switching back and forth and 
+    implement overloaded methods to address both (i'm thinking default to Vector3f then switch to DoubleMatrix wherever more intense
+    math is needed)
+    
     Create KDTree (abstract), then extend it with JblasKDTree (confusing to pass around Jblas trees in places where Vector3fs are used,
     even though it works fine after fitting, since does everything in terms of ids)
     
@@ -56,6 +61,17 @@ public class Main extends SimpleApplication {
     
     TODO: 
     
+    Add sparse graph creator that uses a number of neighbors isntead of a local neighborhood radius (if points very spaced,
+    could cause a lot of connected components to use within radius construction)
+    
+    Can make graphs work with all points, but be very sparse, by utilizing the KDTree when constructing
+    the graphs so that sufficiently far points do not have connection entries (use n nearest neighbors, or local
+    radius) (doing so VERY likely requires
+    switching from using matrices to an object structure to represent the graphs)
+    (Be wary when doing so, makes a segmenter like SimilarityToSelectionPointCloudSEgmenter not able to
+    work since it doesn't have entries from each poitn to every point)
+    (better idea: create a nested object graph -- one with centroids, one without that is sparse, and
+    the segmenters choose the one that better fits what it does. Represent this as graphMap<String (graph name), Graph>)
     
     Somehow modify pointcloud and BFSNearestNeighborSearch so they can sensibly buffer together, and allows pointcloud to track which points are visible on screen
     during the construction of the idBuffer. Then the set of points visible can be used to remove invisible points from computation during segmentation, etc. (not sure
@@ -76,7 +92,7 @@ public class Main extends SimpleApplication {
         volCam.attachCamera(rootNode);
         
         
-        Vector3f[] points = generateSpheresVec3f(100000, new Vector3f[] {Vector3f.ZERO, new Vector3f(3f, -3f, 5f)}, 
+        Vector3f[] points = generateCubesVec3f(100000, new Vector3f[] {Vector3f.ZERO, new Vector3f(3f, -3f, 5f)}, 
                 new float[] {2f, 3f});
         
         pointCloud = new InteractivePointCloud(assetManager, cam, points, new ColorRGBA(1f,0f,0f,1f), 10f, 

@@ -7,9 +7,15 @@ package mygame.ui;
 
 import com.jme3.math.Vector3f;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import mygame.data.search.JblasKDTree;
+import mygame.graph.FullGraph;
+import mygame.graph.Graph;
+import mygame.graph.GraphEdge;
+import mygame.graph.SparseGraph;
+import mygame.graph.GraphNode;
 import mygame.input.VolumetricToolInput;
 import mygame.pointcloud.InteractivePointCloud;
 import org.jblas.DoubleMatrix;
@@ -19,26 +25,28 @@ allows the user to paint so long as the points to be painted are similar enough 
 */
 public class SimilarityToSelectionPointPaintBrushCloudSegmenter extends SphericalPaintBrushPointCloudSegmenter {
     private double tolerance = .6;
-    private Map<Integer, Integer> idToClusterMap;
     
-    public SimilarityToSelectionPointPaintBrushCloudSegmenter(InteractivePointCloud pointCloud, Vector3f[] X, JblasKDTree kdTree, VolumetricToolInput toolInput, Map<Integer, Integer> idToClusterMap) {
+    public SimilarityToSelectionPointPaintBrushCloudSegmenter(InteractivePointCloud pointCloud, Vector3f[] X, JblasKDTree kdTree, VolumetricToolInput toolInput) {
         super(pointCloud, X, kdTree, toolInput);
-        this.idToClusterMap = idToClusterMap;
     }
     
-    
-    
+    /*
+    For SimilarityToSelectionPointPaintBrushCloudSegmenter to work as intended, a FullGraph is likely required 
+    (since all connections to centerId are necessary).
+    */
     @Override
-    protected Set<Integer> getAllWithinRadius(DoubleMatrix simMatrix, int centerId, double radius) {
-        Set<Integer> out = super.getAllWithinRadius(simMatrix, centerId, radius);
-        int nearestSelectPosNeighbor = pointCloud.getNearestScreenNeighborId(toolInput.getSelectPos());
-        if(nearestSelectPosNeighbor < 0) return new HashSet<Integer>();
-        int startSelectCluster = idToClusterMap.get(nearestSelectPosNeighbor);
-        Set<Integer> removeIds = new HashSet<Integer>();
-        for(int id : out) {
-            if(simMatrix.get(startSelectCluster, idToClusterMap.get(id)) < tolerance) removeIds.add(id);
+    protected Set<Integer> getAllWithinRadius(Graph simGraph, int centerId, double radius) {
+        Set<Integer> withinRadius = super.getAllWithinRadius(simGraph, centerId, radius);
+        int nearestSelectNeighborId = pointCloud.getNearestScreenNeighborId(toolInput.getSelectPos());
+        if(nearestSelectNeighborId < 0) return new HashSet<Integer>();
+        
+        List<GraphEdge> centerEdges = simGraph.getOutEdges(nearestSelectNeighborId);
+        HashSet<Integer> out = new HashSet<Integer>();
+        for(GraphEdge centerEdge : centerEdges) {
+            if(centerEdge.WEIGHT >= tolerance && withinRadius.contains(centerEdge.CHILD_ID)) {
+                out.add(centerEdge.CHILD_ID);
+            }
         }
-        out.removeAll(removeIds);
         return out;
     }
 }

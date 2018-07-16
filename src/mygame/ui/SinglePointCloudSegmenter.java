@@ -12,6 +12,8 @@ import java.util.Set;
 import mygame.pointcloud.InteractivePointCloud;
 import mygame.pointcloud.PointCloud;
 import mygame.Updatable;
+import mygame.graph.Graph;
+import mygame.graph.SparseGraph;
 import mygame.input.VolumetricToolInput;
 import mygame.ml.Segmenter;
 import org.jblas.DoubleMatrix;
@@ -31,7 +33,7 @@ public class SinglePointCloudSegmenter implements Segmenter {
     }
     
     @Override
-    public Set<Integer> getSegmentedIds(DoubleMatrix simMatrix) {
+    public Set<Integer> getSegmentedIds(Graph simGraph) {
         if(toolInput.getIfDiscreteAction("SELECT_TOGGLE")) {
             int nearestNeighborId = pointCloud.getNearestScreenNeighborId(toolInput.getCursorPos());
             if(nearestNeighborId >= 0) {

@@ -11,6 +11,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import mygame.data.search.JblasKDTree;
+import mygame.graph.Graph;
+import mygame.graph.SparseGraph;
 import mygame.pointcloud.InteractivePointCloud;
 import mygame.input.VolumetricToolInput;
 import mygame.ml.Segmenter;
@@ -41,11 +43,11 @@ public class SphericalPaintBrushPointCloudSegmenter implements Segmenter {
     
     
     @Override
-    public Set<Integer> getSegmentedIds(DoubleMatrix simMatrix) {
+    public Set<Integer> getSegmentedIds(Graph simGraph) {
         if(toolInput.getIfDiscreteAction("SELECT_TOGGLE")) {
             int nearestNeighborId = pointCloud.getNearestScreenNeighborId(toolInput.getCursorPos());
             if(nearestNeighborId >= 0) {
-                Set<Integer> withinRadius = getAllWithinRadius(simMatrix, nearestNeighborId, brushRadius);
+                Set<Integer> withinRadius = getAllWithinRadius(simGraph, nearestNeighborId, brushRadius);
                 if (toolInput.getIfDiscreteAction("ERASE_TOGGLE")) {
                     segmentIds.removeAll(withinRadius);
                 } else {
@@ -58,22 +60,8 @@ public class SphericalPaintBrushPointCloudSegmenter implements Segmenter {
         }
         return (Set<Integer>)segmentIds.clone();
     }
-    /*simMatrix is passed for extensions to override how this method operates*/
-    protected Set<Integer> getAllWithinRadius(DoubleMatrix simMatrix, int centerId, double radius) {
+    /*simGraph is passed for extensions to override how this method operates*/
+    protected Set<Integer> getAllWithinRadius(Graph simGraph, int centerId, double radius) {
         return kdTree.getIdsWithinRadius(JblasJMEConverter.toDoubleMatrix(X[centerId]), radius);
-        /*
-        HashSet<Integer> out = new HashSet<Integer>();
-        double radiusSqr = radius*radius;
-        for(int i = 0; i < centroids.length; i++) {
-            if(X[centerId].distance(centroids[i]) < CENTROID_RADIUS_SEARCH_SLACK_MULTIPLIER*radius) {
-                for(int id : clusterSets[i]) {
-                    if(X[id].distanceSquared(X[centerId]) < radiusSqr) {
-                        out.add(id);
-                    }
-                }
-            }
-        }
-        return out;
-        */
     }
 }

@@ -6,8 +6,9 @@
 package mygame.volumetrics;
 
 import java.util.Arrays;
-import mygame.data.search.JblasKDTree;
+import mygame.data.search.KDTree;
 import mygame.ml.JblasPCA;
+import mygame.util.JblasJMEConverter;
 import org.jblas.DoubleMatrix;
 
 /**
@@ -36,11 +37,11 @@ public class CloudNormal {
     */
     
     
-    public static DoubleMatrix getUnorientedPCANormals(DoubleMatrix X, int nNeighbors) {
-        JblasKDTree kdTree = new JblasKDTree(X);
+    public static DoubleMatrix getUnorientedPCANormals(DoubleMatrix X, KDTree kdTree, int nNeighbors) {
+        
         DoubleMatrix normals = DoubleMatrix.zeros(X.rows, X.columns);
         for(int i = 0; i < X.rows; i++) {
-            int[] nearestNeighborIds = kdTree.getNearestNeighborIds(X.getRow(i), nNeighbors);
+            int[] nearestNeighborIds = kdTree.getNearestNeighborIds(X.getRow(i).toArray(), nNeighbors);
             DoubleMatrix neighborVecs = X.getRows(nearestNeighborIds);
             normals.putRow(i, JblasPCA.getPrincipalComponents(neighborVecs)[0].getColumn(0));
         }

@@ -4,21 +4,37 @@ import com.jme3.math.Vector3f;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
-import mygame.data.search.JblasKDTree;
+import mygame.data.search.KDTree;
 import mygame.graph.FullGraph;
 import mygame.graph.Graph;
 import mygame.graph.SparseGraph;
 import mygame.util.GraphUtil;
 import mygame.util.JblasJMEConverter;
 import mygame.util.SegmenterUtils;
+import mygame.volumetrics.CloudNormal;
 import org.jblas.DoubleMatrix;
 
 
 public class CurvatureSimilarityGraphConstructor {
     
     
+    public static SparseGraph constructNoCentroidSparsePCASimilarityGraph(Vector3f[] X, KDTree kdTree, 
+            SimilarityMetric<Vector3f> normalSimMetric, int nPCAPoints, int nNodeChildren) {
+        Vector3f[] normals = JblasJMEConverter.toVector3f(CloudNormal.getUnorientedPCANormals(JblasJMEConverter.toDoubleMatrix(X), kdTree, nPCAPoints));
+        SparseGraph out = new SparseGraph(X.length);
+        for(int i = 0; i < X.length; i++) {
+            int[] iNearestNeighbors = kdTree.getNearestNeighborIds(JblasJMEConverter.toArr(X[i])[0], nNodeChildren);
+            for(int connectId : iNearestNeighbors) {
+                double normalSim = normalSimMetric.similarityBetween(normals[i], normals[connectId]);
+                out.link(i, connectId, normalSim);
+                out.link(connectId, i, normalSim);
+            }
+        }
+        return out;
+    }
     
-    public static SparseGraph constructSparsePCASimilarityGraph (Vector3f[] X, JblasKDTree kdTree, SimilarityMetric<Vector3f> normalSimMetric,
+    
+    public static SparseGraph constructSparsePCASimilarityGraph (Vector3f[] X, KDTree kdTree, SimilarityMetric<Vector3f> normalSimMetric,
             Map<Integer, Integer> idToClusterMap, Vector3f[] centroids) {
         //all points in a cluster are sparsely connected with similarity 1 (max similarity). (each point in a cluster has one child)
         //one point (closest to centroid of the cluster) is attached to the closest to centroid of all other clusters, 
@@ -37,11 +53,9 @@ public class CurvatureSimilarityGraphConstructor {
         
         Vector3f[] clusterNormals = getClusterNormals(X, idToClusterMap, centroids.length);
         int[] nearestIdToCentroids = new int[centroids.length];
-        long startTime = System.currentTimeMillis();
         for(int i = 0; i < nearestIdToCentroids.length; i++) {
-            nearestIdToCentroids[i] = kdTree.getNearestNeighborId(JblasJMEConverter.toDoubleMatrix(centroids[i]));
+            nearestIdToCentroids[i] = kdTree.getNearestNeighborId(JblasJMEConverter.toArr(centroids[i])[0]);
         }
-        System.out.println("Time profiled: " + Double.toString(System.currentTimeMillis() - startTime));
         for(int i = 0; i < nearestIdToCentroids.length; i++) {
             for(int j = 0; j < i; j++) {
                 double normalSim = normalSimMetric.similarityBetween(clusterNormals[i], clusterNormals[j]);
@@ -53,13 +67,14 @@ public class CurvatureSimilarityGraphConstructor {
         return out;
     }
     
-    public static SparseGraph constructSuperSparsePCASimilarityGraph(Vector3f[] X, JblasKDTree kdTree, SimilarityMetric<Vector3f> normalSimMetric,
+    public static SparseGraph constructSuperSparsePCASimilarityGraph(Vector3f[] X, KDTree kdTree, SimilarityMetric<Vector3f> normalSimMetric,
             Map<Integer, Integer> idToClusterMap, Vector3f[] centroids, int nCentroidNeighbors) {
         
+        //uses centroids and cluster subsets to map all points in a subset to that cluster's normal. 
+        //sparsely connects all points in a subset
+        //connects nearest neighbor to centroids together, iff they are suitably close to each other
         
-         long startTime = System.nanoTime();
-        
-        JblasKDTree centroidKDTree = new JblasKDTree(JblasJMEConverter.toDoubleMatrix(centroids));
+        KDTree centroidKDTree = new KDTree(JblasJMEConverter.toArr(centroids));
         SparseGraph out = new SparseGraph(X.length);
         Set<Integer>[] clusterSetIds = SegmenterUtils.convertIntoClusterSets(idToClusterMap);
         
@@ -74,12 +89,12 @@ public class CurvatureSimilarityGraphConstructor {
         int[] nearestIdToCentroids = new int[centroids.length];
         
         for(int i = 0; i < nearestIdToCentroids.length; i++) {
-            nearestIdToCentroids[i] = kdTree.getNearestNeighborId(JblasJMEConverter.toDoubleMatrix(centroids[i]));
+            nearestIdToCentroids[i] = kdTree.getNearestNeighborId(JblasJMEConverter.toArr(centroids[i])[0]);
         }
         
         for(int i = 0; i < nearestIdToCentroids.length; i++) {
             int[] nearestCentroidNeighborIds = centroidKDTree.getNearestNeighborIds(
-                    JblasJMEConverter.toDoubleMatrix(centroids[i]), nCentroidNeighbors);
+                    JblasJMEConverter.toArr(centroids[i])[0], nCentroidNeighbors);
             for(int clusterId : nearestCentroidNeighborIds) {
                 //note, clusterId will == i when iterating
                 double normalSim = normalSimMetric.similarityBetween(clusterNormals[i], clusterNormals[clusterId]);
@@ -87,7 +102,6 @@ public class CurvatureSimilarityGraphConstructor {
                 out.link(nearestIdToCentroids[clusterId], nearestIdToCentroids[i], normalSim);
             }
         }
-        System.out.println("profile time: " + Double.toString(((double)(System.nanoTime() - startTime)/1000000.0)));
         return out;
         
     }
@@ -102,8 +116,8 @@ public class CurvatureSimilarityGraphConstructor {
         graph.link(idClusterArr[0], idClusterArr[idClusterArr.length-1], value);
     }
     
-    public static FullGraph constructPCASimilarityGraph(DoubleMatrix X, JblasKDTree kdTree, SimilarityMetric normalSimMetric, int nNeighbors) {
-        return GraphUtil.constructFullSimilarityGraph(getNormals(X, kdTree, nNeighbors), normalSimMetric);
+    public static FullGraph constructPCASimilarityGraph(DoubleMatrix X, KDTree kdTree, SimilarityMetric normalSimMetric, int nNeighbors) {
+        return GraphUtil.constructFullSimilarityGraph(JblasJMEConverter.toVector3f(CloudNormal.getUnorientedPCANormals(X, kdTree, nNeighbors)), normalSimMetric);
     }
     
     private static Vector3f[] getClusterNormals(Vector3f[] X, Map<Integer, Integer> idToClusterMap, int nCentroids) {
@@ -115,14 +129,5 @@ public class CurvatureSimilarityGraphConstructor {
             clusterNormals[i] = JblasJMEConverter.toVector3f(jblasClusterINormal)[0];
         }
         return clusterNormals;
-    }
-    
-    private static DoubleMatrix[] getNormals(DoubleMatrix X, JblasKDTree kdTree, int nNeighbors) {
-        DoubleMatrix[] normals = new DoubleMatrix[X.rows];
-        for(int i = 0; i < X.rows; i++) {
-            int[] nearestNeighborIds = kdTree.getNearestNeighborIds(X.getRow(i), nNeighbors);
-            normals[i] = JblasPCA.getPrincipalComponents(X.getRows(nearestNeighborIds))[0].getColumn(0);
-        }
-        return normals;
     }
 }

@@ -9,7 +9,7 @@ import com.jme3.math.Vector3f;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import mygame.data.search.JblasKDTree;
+import mygame.data.search.KDTree;
 import mygame.graph.FullGraph;
 import mygame.graph.Graph;
 import mygame.graph.GraphEdge;
@@ -59,11 +59,11 @@ public class GraphUtil {
     }
     
     public static SparseGraph constructSparseSimilarityGraph(Vector3f[] X, SimilarityMetric<Vector3f> graphSimilarityMetric,
-            JblasKDTree kdTree, int sparseNNeighbors) {
+            KDTree kdTree, int sparseNNeighbors) {
         DoubleMatrix XMat = JblasJMEConverter.toDoubleMatrix(X);
         SparseGraph out = new SparseGraph(X.length);
         for(int i = 0; i < X.length; i++) {
-            int[] nearestNeighborsOfI = kdTree.getNearestNeighborIds(XMat.getRow(i), sparseNNeighbors);
+            int[] nearestNeighborsOfI = kdTree.getNearestNeighborIds(XMat.getRow(i).toArray(), sparseNNeighbors);
             for(int id : nearestNeighborsOfI) {
                 out.link(i, id, graphSimilarityMetric.similarityBetween(X[i], X[id]));
             }
@@ -73,12 +73,12 @@ public class GraphUtil {
     
     
     public static SparseGraph constructSparseSimilarityGraph(Vector3f[] X, SimilarityMetric<Vector3f> graphSimilarityMetric, 
-            JblasKDTree kdTree, double maxRadius) {
+            KDTree kdTree, double maxRadius) {
         DoubleMatrix XMat = JblasJMEConverter.toDoubleMatrix(X);
         SparseGraph out = new SparseGraph(X.length);
         int nConnections = 0;
         for(int i = 0; i < X.length; i++) {
-            Set<Integer> withinRadiusOfI = kdTree.getIdsWithinRadius(XMat.getRow(i), maxRadius);
+            Set<Integer> withinRadiusOfI = kdTree.getIdsWithinRadius(XMat.getRow(i).toArray(), maxRadius);
             for(int withinRadiusId : withinRadiusOfI) {
                 out.link(i, withinRadiusId, graphSimilarityMetric.similarityBetween(X[i], X[withinRadiusId]));
                 nConnections ++;

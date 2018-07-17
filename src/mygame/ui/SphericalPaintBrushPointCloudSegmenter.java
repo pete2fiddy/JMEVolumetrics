@@ -10,7 +10,7 @@ import com.jme3.math.Vector3f;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import mygame.data.search.JblasKDTree;
+import mygame.data.search.KDTree;
 import mygame.graph.Graph;
 import mygame.graph.SparseGraph;
 import mygame.pointcloud.InteractivePointCloud;
@@ -31,9 +31,9 @@ public class SphericalPaintBrushPointCloudSegmenter implements Segmenter {
     protected float brushRadius = 0.25f;
     Set<Integer>[] clusterSets;
     HashSet<Integer> segmentIds = new HashSet<Integer>();
-    private JblasKDTree kdTree;
+    private KDTree kdTree;
     
-    public SphericalPaintBrushPointCloudSegmenter(InteractivePointCloud pointCloud, Vector3f[] X, JblasKDTree kdTree, 
+    public SphericalPaintBrushPointCloudSegmenter(InteractivePointCloud pointCloud, Vector3f[] X, KDTree kdTree, 
             VolumetricToolInput toolInput) {
         this.X = X;
         this.pointCloud = pointCloud;
@@ -62,6 +62,6 @@ public class SphericalPaintBrushPointCloudSegmenter implements Segmenter {
     }
     /*simGraph is passed for extensions to override how this method operates*/
     protected Set<Integer> getAllWithinRadius(Graph simGraph, int centerId, double radius) {
-        return kdTree.getIdsWithinRadius(JblasJMEConverter.toDoubleMatrix(X[centerId]), radius);
+        return kdTree.getIdsWithinRadius(JblasJMEConverter.toArr(X[centerId])[0], radius);
     }
 }

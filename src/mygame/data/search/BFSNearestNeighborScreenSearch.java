@@ -1,4 +1,4 @@
-package mygame;
+package mygame.data.search;
 
 import com.jme3.math.Matrix4f;
 import com.jme3.math.Vector2f;
@@ -13,7 +13,7 @@ import mygame.util.ArrayUtil;
 import mygame.util.PointUtil;
 
 
-public class BFSNearestNeighborSearch implements Runnable {
+public class BFSNearestNeighborScreenSearch implements Runnable {
     protected Camera cam;
     protected Vector3f[] X;
     private volatile int[][] idBuffer;
@@ -21,7 +21,7 @@ public class BFSNearestNeighborSearch implements Runnable {
     private volatile boolean doUpdate = true;
     
     
-    public BFSNearestNeighborSearch(Camera cam, Vector3f[] X) {
+    public BFSNearestNeighborScreenSearch(Camera cam, Vector3f[] X) {
         this.cam = cam;
         this.X = X;
         updateIdBuffer();

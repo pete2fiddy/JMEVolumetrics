@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 import mygame.pointcloud.InteractivePointCloud;
 import mygame.pointcloud.PointCloud;
-import mygame.Updatable;
 import mygame.graph.Graph;
 import mygame.graph.SparseGraph;
 import mygame.input.VolumetricToolInput;

@@ -22,6 +22,15 @@ public class JblasJMEConverter {
         return new DoubleMatrix(doubleMatArr);
     }
     
+    public static double[][] toArr(Vector3f... X) {
+        double[][] out = new double[X.length][3];
+        for(int i = 0; i < out.length; i++){
+            out[i] = new double[] {(double)X[i].x, (double)X[i].y, (double)X[i].z};
+        }
+        return out;
+    }
+    
+    
     public static Vector3f[] toVector3f(DoubleMatrix X) {
         if(X.columns == 1) {
             return new Vector3f[] {new Vector3f((float)X.get(0), (float)X.get(1), (float)X.get(2))};

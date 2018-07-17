@@ -11,7 +11,7 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.shape.Line;
 import java.util.ArrayList;
 import java.util.HashSet;
-import mygame.data.search.JblasKDTree;
+import mygame.data.search.KDTree;
 import mygame.ml.JMEKMeansClusterer;
 import mygame.ml.JMERadialBasisSimilarity;
 import mygame.pointcloud.LineCloud;

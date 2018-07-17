@@ -18,7 +18,7 @@ import com.jme3.math.Vector2f;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import java.util.HashMap;
-import mygame.Updatable;
+import mygame.ui.Updatable;
 
 /**
  *

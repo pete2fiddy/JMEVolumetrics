@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import mygame.data.search.JblasKDTree;
+import mygame.data.search.KDTree;
 import mygame.graph.FullGraph;
 import mygame.graph.Graph;
 import mygame.graph.GraphEdge;
@@ -26,7 +26,7 @@ allows the user to paint so long as the points to be painted are similar enough 
 public class SimilarityToSelectionPointPaintBrushCloudSegmenter extends SphericalPaintBrushPointCloudSegmenter {
     private double tolerance = .6;
     
-    public SimilarityToSelectionPointPaintBrushCloudSegmenter(InteractivePointCloud pointCloud, Vector3f[] X, JblasKDTree kdTree, VolumetricToolInput toolInput) {
+    public SimilarityToSelectionPointPaintBrushCloudSegmenter(InteractivePointCloud pointCloud, Vector3f[] X, KDTree kdTree, VolumetricToolInput toolInput) {
         super(pointCloud, X, kdTree, toolInput);
     }
     

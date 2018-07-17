@@ -14,11 +14,12 @@ import mygame.PointSelectBFSNearestNeighborSearch;
 import mygame.data.search.JblasKDTree;
 import mygame.graph.Graph;
 import mygame.input.VolumetricToolInput;
+import mygame.ml.CentroidClusterer;
 import mygame.ml.CurvatureSimilarityGraphConstructor;
 import mygame.ml.JMEInvEuclidianSimilarity;
 import mygame.ml.JMEKMeansClusterer;
 import mygame.ml.JMERadialBasisSimilarity;
-import mygame.ml.JblasCosineAngleSquaredSimilarityMetric;
+import mygame.ml.JMECosineAngleSquaredSimilarityMetric;
 import mygame.ml.Segmenter;
 import mygame.ui.SimilarityToSelectionPointCloudSegmenter;
 import mygame.ui.SimilarityThresholdedFloodfillCloudSegmenter;
@@ -47,7 +48,7 @@ public class InteractivePointCloud extends PointCloud {
     
     
     
-    private PointCloud centroidCloud;
+    //private PointCloud centroidCloud;
     
     
     public InteractivePointCloud(AssetManager assetManager, Camera cam, CloudPoint[] points, InputManager inputManager) {
@@ -79,20 +80,20 @@ public class InteractivePointCloud extends PointCloud {
         //this.pointSegmenter = new SimilarityToSelectionPointPaintBrushCloudSegmenter(this, CloudPoint.extractPoints(points), kdTree, toolInput);
         
         
-        long startTime = System.nanoTime();
-        /*activeSimGraph = CurvatureSimilarityGraphConstructor.constructPCASimilarityGraph(
-        JblasJMEConverter.toDoubleMatrix(CloudPoint.extractPoints(points)),
-                kdTree, new JblasCosineAngleSquaredSimilarityMetric(), 10);*/
         
-        /*activeSimGraph = CurvatureSimilarityGraphConstructor.constructSparsePCASimilarityGraph(
-        JblasJMEConverter.toDoubleMatrix(CloudPoint.extractPoints(points)), 
-                new JblasCosineAngleSquaredSimilarityMetric(),
-                10, kdTree, .5);*/
+        CentroidClusterer<Vector3f> centroidClusterer = new JMEKMeansClusterer(500, 5);
+        Vector3f[] centroids = centroidClusterer.getClusterCentroids(CloudPoint.extractPoints(points));
         
-        activeSimGraph = CurvatureSimilarityGraphConstructor.constructSparsePCASimilarityGraph(JblasJMEConverter.toDoubleMatrix(CloudPoint.extractPoints(points)),
-                new JblasCosineAngleSquaredSimilarityMetric(),
-                5, kdTree, 15);
-        System.out.println("sim graph construction time: " + Double.toString((double)((System.nanoTime()-startTime)/1000000.0)));
+        /*activeSimGraph = CurvatureSimilarityGraphConstructor.constructSuperSparsePCASimilarityGraph(CloudPoint.extractPoints(points), 
+                kdTree, new JMECosineAngleSquaredSimilarityMetric(),
+                centroidClusterer.clusterIds(centroids, CloudPoint.extractPoints(points)), centroids, 10);*/
+        
+        activeSimGraph = CurvatureSimilarityGraphConstructor.constructSparsePCASimilarityGraph(CloudPoint.extractPoints(points), 
+                kdTree, new JMECosineAngleSquaredSimilarityMetric(),
+                centroidClusterer.clusterIds(centroids, CloudPoint.extractPoints(points)), centroids);
+        
+        /*activeSimGraph = GraphUtil.constructSparseSimilarityGraph(CloudPoint.extractPoints(points), new JMERadialBasisSimilarity(),
+                kdTree, 5);*/
     }
     
     public void enableNNSearchThread(boolean b) {
@@ -116,8 +117,8 @@ public class InteractivePointCloud extends PointCloud {
     
     public void initSimGraphs() {
         //probably doesn't make sense to completely recluster every time points are updated?
-        JMEKMeansClusterer centroidClusterer = new JMEKMeansClusterer(1000, 10);
-        Vector3f[] vecs = CloudPoint.extractPoints(points);
+        //JMEKMeansClusterer centroidClusterer = new JMEKMeansClusterer(1000, 10);
+        //Vector3f[] vecs = CloudPoint.extractPoints(points);
         /*proximitySimGraph = GraphUtil.constructSimilarityGraph(centroids, new JMERadialBasisSimilarity());
         
         

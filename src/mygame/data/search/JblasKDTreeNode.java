@@ -6,12 +6,15 @@ import java.util.HashSet;
 import java.util.Set;
 import org.jblas.DoubleMatrix;
 
+
+
 public class JblasKDTreeNode {
     private final Comparator VEC_COMPARATOR;
     private final int SPLIT_AXIS;
     private double splitValue;
     private int leafId;
     private JblasKDTreeNode[] children = null;
+    
     
     public JblasKDTreeNode(int splitAxis) {
         this.SPLIT_AXIS = splitAxis;
@@ -64,10 +67,11 @@ public class JblasKDTreeNode {
     
     
     protected void setNNearestNeighborIds(DoubleMatrix X, double[] searchPoint, int[] neighbors, double[] distances) {
-        int maxDistNeighbor = getMaxDistNeighbor(distances);
-        double maxDist = distances[maxDistNeighbor];
+        //to speed up more, maintain always sorted order for neighbors and distances reather than searching for max distance
         if(isLeaf()) {
             if(isValueLeaf()) {
+                int maxDistNeighbor = getMaxDistNeighbor(distances);
+                double maxDist = distances[maxDistNeighbor];
                 DoubleMatrix leafVec = X.getRow(leafId);
                 double searchDistToLeafVec = leafVec.distance2(new DoubleMatrix(new double[][] {searchPoint}));
                 if(searchDistToLeafVec < maxDist) {
@@ -79,22 +83,29 @@ public class JblasKDTreeNode {
         }
         
         double[] childMinDists = regionsMinPossibleDistToPoint(searchPoint);
-        if(childMinDists[0] < maxDist) children[0].setNNearestNeighborIds(X, searchPoint, neighbors, distances);
-        
-        //max dist neighbor and max dist need to be recalculated as the call above may have altered it to make it smaller
-        maxDistNeighbor = getMaxDistNeighbor(distances);
-        maxDist = distances[maxDistNeighbor];
-        if(childMinDists[1] < maxDist) children[1].setNNearestNeighborIds(X, searchPoint, neighbors, distances);
+        if(childMinDists[0] < childMinDists[1]) {
+            //childMinDists[0] must be 0
+            children[0].setNNearestNeighborIds(X, searchPoint, neighbors, distances);
+            int maxDistNeighbor = getMaxDistNeighbor(distances);
+            double maxDist = distances[maxDistNeighbor];
+            if(childMinDists[1] < maxDist) children[1].setNNearestNeighborIds(X, searchPoint, neighbors, distances);
+        } else {
+            //childMinDists[1] must be 0
+            children[1].setNNearestNeighborIds(X, searchPoint, neighbors, distances);
+            int maxDistNeighbor = getMaxDistNeighbor(distances);
+            double maxDist = distances[maxDistNeighbor];
+            if(childMinDists[0] < maxDist) children[0].setNNearestNeighborIds(X, searchPoint, neighbors, distances);
+        }
     }
     
-    private int getMaxDistNeighbor(double[] distances) {
+    private static int getMaxDistNeighbor(double[] distances) {
         int maxDistNeighbor = 0;
         for(int i = 0; i < distances.length; i++) {
             if(distances[i] > distances[maxDistNeighbor]) maxDistNeighbor = i;
         }
         return maxDistNeighbor;
     }
-            
+       
     protected double[] regionsMinPossibleDistToPoint(double[] searchPoint) {
         double[] out = new double[2];
         out[0] = (splitValueCompare(searchPoint) < 0)? 0:Math.abs(searchPoint[SPLIT_AXIS] - splitValue);
@@ -111,8 +122,8 @@ public class JblasKDTreeNode {
             return;
         }
         splitValue = getSplitValue(getXRemainingArr(X, remainingIds));
-        Set<Integer>[] splits = split(X, remainingIds);
-        children = new JblasKDTreeNode[2];
+        Set<Integer>[] splits = split(X, remainingIds); 
+       children = new JblasKDTreeNode[2];
         for(int i = 0; i < 2; i++) {
             children[i] = new JblasKDTreeNode((SPLIT_AXIS+1)%X[0].length);
             children[i].fit(X, splits[i]);

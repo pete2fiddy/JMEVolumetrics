@@ -27,7 +27,7 @@ public class GraphUtil {
     public static <DataType> FullGraph constructFullSimilarityGraph(DataType[] X, SimilarityMetric<DataType> metric) {
         FullGraph out = new FullGraph(X.length);
         for(int i = 0; i < X.length; i++) {
-            for(int j = 0; j < X.length; j++) {
+            for(int j = 0; j < i; j++) {
                 double similarity = metric.similarityBetween(X[i], X[j]);
                 if(similarity > 0) {
                     out.link(i, j, similarity);
@@ -46,7 +46,7 @@ public class GraphUtil {
             SimilarityMetric<DataType> thresholdedSimilarityMetric, double threshold) {
         SparseGraph out = new SparseGraph(X.length);
         for(int i = 0; i < X.length; i++) {
-            for(int j = 0; j < i/2; j++) {
+            for(int j = 0; j < i; j++) {
                 double threshSim = thresholdedSimilarityMetric.similarityBetween(X[i], X[j]);
                 if(threshSim > threshold) {
                     double edgeWeight = graphSimilarityMetric.similarityBetween(X[i], X[j]);

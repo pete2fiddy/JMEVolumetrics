@@ -23,6 +23,9 @@ public class JblasJMEConverter {
     }
     
     public static Vector3f[] toVector3f(DoubleMatrix X) {
+        if(X.columns == 1) {
+            return new Vector3f[] {new Vector3f((float)X.get(0), (float)X.get(1), (float)X.get(2))};
+        }
         Vector3f[] out = new Vector3f[X.rows];
         for(int i = 0; i < out.length; i++) {
             out[i] = new Vector3f((float)X.get(i,0),

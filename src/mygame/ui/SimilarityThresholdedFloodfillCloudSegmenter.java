@@ -23,7 +23,7 @@ import org.jblas.DoubleMatrix;
 public class SimilarityThresholdedFloodfillCloudSegmenter implements Segmenter {
     private InteractivePointCloud pointCloud;
     private VolumetricToolInput toolInput;
-    private double similarityThresholdChangePerPixelWeight = 0.05;
+    private double similarityThresholdChangePerPixelWeight = 0.005;
     private Set<Integer> currentSelectedSegmentIds = new HashSet<Integer>();
     private Set<Integer> segmentIds = new HashSet<Integer>();
     

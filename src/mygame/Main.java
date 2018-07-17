@@ -61,6 +61,13 @@ public class Main extends SimpleApplication {
     
     TODO: 
     
+    Change PCA graph construction to use a centroid clusterer, and set the normals of all points in a given cluster to the pca 
+    of the set that falls into the cluster ONLY
+    
+    Createa a normal orientation histogram?
+    
+    Graph construction is VERY slow but segmenting is fast...
+    
     Add sparse graph creator that uses a number of neighbors isntead of a local neighborhood radius (if points very spaced,
     could cause a lot of connected components to use within radius construction)
     
@@ -69,7 +76,7 @@ public class Main extends SimpleApplication {
     radius) (doing so VERY likely requires
     switching from using matrices to an object structure to represent the graphs)
     (Be wary when doing so, makes a segmenter like SimilarityToSelectionPointCloudSEgmenter not able to
-    work since it doesn't have entries from each poitn to every point)
+    work since it doesn't have entries from each point to every point)
     (better idea: create a nested object graph -- one with centroids, one without that is sparse, and
     the segmenters choose the one that better fits what it does. Represent this as graphMap<String (graph name), Graph>)
     

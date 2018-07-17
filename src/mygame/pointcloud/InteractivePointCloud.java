@@ -88,9 +88,12 @@ public class InteractivePointCloud extends PointCloud {
                 kdTree, new JMECosineAngleSquaredSimilarityMetric(),
                 centroidClusterer.clusterIds(centroids, CloudPoint.extractPoints(points)), centroids, 10);*/
         
-        activeSimGraph = CurvatureSimilarityGraphConstructor.constructSparsePCASimilarityGraph(CloudPoint.extractPoints(points), 
+        /*activeSimGraph = CurvatureSimilarityGraphConstructor.constructSparsePCASimilarityGraph(CloudPoint.extractPoints(points), 
                 kdTree, new JMECosineAngleSquaredSimilarityMetric(),
-                centroidClusterer.clusterIds(centroids, CloudPoint.extractPoints(points)), centroids);
+                centroidClusterer.clusterIds(centroids, CloudPoint.extractPoints(points)), centroids);*/
+        
+        activeSimGraph = CurvatureSimilarityGraphConstructor.constructPCASimilarityGraph(CloudPoint.extractPoints(points), 
+                kdTree, new JMECosineAngleSquaredSimilarityMetric(), 10);
         
         /*activeSimGraph = GraphUtil.constructSparseSimilarityGraph(CloudPoint.extractPoints(points), new JMERadialBasisSimilarity(),
                 kdTree, 5);*/

@@ -13,16 +13,20 @@ import java.util.Set;
 import mygame.data.search.PointSelectBFSNearestNeighborSearch;
 import mygame.data.search.KDTree;
 import mygame.graph.Graph;
+import mygame.graph.OnTheFlySimilarityGraph;
 import mygame.input.VolumetricToolInput;
 import mygame.ml.CentroidClusterer;
 import mygame.ml.CurvatureSimilarityGraphConstructor;
-import mygame.ml.JMEKMeansClusterer;
-import mygame.ml.JMECosineAngleSquaredSimilarityMetric;
+import mygame.ml.similarity.jme.JMEKMeansClusterer;
+import mygame.ml.similarity.jme.JMECosAngleSquaredSimilarity;
 import mygame.ml.Segmenter;
+import mygame.ml.similarity.jblas.JblasCosAngleSquaredSimilarity;
 import mygame.ui.SimilarityThresholdedFloodfillCloudSegmenter;
 import mygame.ui.SimilarityToSelectionPointPaintBrushCloudSegmenter;
 import mygame.ui.SphericalPaintBrushPointCloudSegmenter;
 import mygame.util.JblasJMEConverter;
+import mygame.volumetrics.CloudNormal;
+import org.jblas.DoubleMatrix;
 
 
 public class InteractivePointCloud extends PointCloud {
@@ -58,29 +62,23 @@ public class InteractivePointCloud extends PointCloud {
         this.kdTree = new KDTree(JblasJMEConverter.toArr(CloudPoint.extractPoints(points)));
         this.toolInput = new VolumetricToolInput(inputManager);
         //this.pointSegmenter = new SphericalPaintBrushPointCloudSegmenter(this, CloudPoint.extractPoints(points), kdTree, toolInput);
-        this.pointSegmenter = new SimilarityThresholdedFloodfillCloudSegmenter(this, toolInput);
+        //this.pointSegmenter = new SimilarityThresholdedFloodfillCloudSegmenter(this, toolInput);
         //this.pointSegmenter = new SimilarityToSelectionPointCloudSegmenter(this, toolInput);
         //this.pointSegmenter = new SinglePointCloudSegmenter(this, toolInput);
-        //this.pointSegmenter = new SimilarityToSelectionPointPaintBrushCloudSegmenter(this, CloudPoint.extractPoints(points), kdTree, toolInput);
+        this.pointSegmenter = new SimilarityToSelectionPointPaintBrushCloudSegmenter(this, CloudPoint.extractPoints(points), kdTree, toolInput);
         
         
         
-        CentroidClusterer<Vector3f> centroidClusterer = new JMEKMeansClusterer(5000, 5);
-        Vector3f[] centroids = centroidClusterer.getClusterCentroids(CloudPoint.extractPoints(points));
+        Vector3f[] extractedPoints = CloudPoint.extractPoints(points);
+        DoubleMatrix pointsMat = JblasJMEConverter.toDoubleMatrix(extractedPoints);
         
-        /*activeSimGraph = CurvatureSimilarityGraphConstructor.constructSuperSparsePCASimilarityGraph(CloudPoint.extractPoints(points), 
-                kdTree, new JMECosineAngleSquaredSimilarityMetric(),
-                centroidClusterer.clusterIds(centroids, CloudPoint.extractPoints(points)), centroids, 10);*/
+        //CentroidClusterer<Vector3f> centroidClusterer = new JMEKMeansClusterer(5000, 5);
+        //Vector3f[] centroids = centroidClusterer.getClusterCentroids(CloudPoint.extractPoints(points));
         
-        /*activeSimGraph = CurvatureSimilarityGraphConstructor.constructSparsePCASimilarityGraph(CloudPoint.extractPoints(points), 
-                kdTree, new JMECosineAngleSquaredSimilarityMetric(),
-                centroidClusterer.clusterIds(centroids, CloudPoint.extractPoints(points)), centroids);*/
         
-        /*activeSimGraph = CurvatureSimilarityGraphConstructor.constructPCASimilarityGraph(JblasJMEConverter.toDoubleMatrix(CloudPoint.extractPoints(points)), 
-                kdTree, new JMECosineAngleSquaredSimilarityMetric(), 10);*/
+        activeSimGraph = new OnTheFlySimilarityGraph(JblasJMEConverter.toVector3f(CloudNormal.getUnorientedPCANormals(pointsMat, kdTree, 10)), new JMECosAngleSquaredSimilarity());
         
-        activeSimGraph = CurvatureSimilarityGraphConstructor.constructNoCentroidSparsePCASimilarityGraph(
-        CloudPoint.extractPoints(points), kdTree, new JMECosineAngleSquaredSimilarityMetric(), 10, 10);
+        
         
         /*activeSimGraph = GraphUtil.constructSparseSimilarityGraph(CloudPoint.extractPoints(points), new JMERadialBasisSimilarity(),
                 kdTree, 5);*/
@@ -160,7 +158,7 @@ public class InteractivePointCloud extends PointCloud {
     private void selectPoint(int id) {
         if(!selectedPoints.containsKey(id)){
             selectedPoints.put(id, points[id].copy());
-            setPoint(id, new CloudPoint(points[id].point, new ColorRGBA(1f,1f,1f,1f), points[id].size*POINT_SELECT_SIZE_MULTIPLIER));
+            setPoint(id, new CloudPoint(points[id].POINT, new ColorRGBA(1f,1f,1f,1f), points[id].SIZE*POINT_SELECT_SIZE_MULTIPLIER));
         }
     }
     

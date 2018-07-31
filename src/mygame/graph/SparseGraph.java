@@ -7,7 +7,7 @@ import java.util.Map;
 
 
 public class SparseGraph implements Graph {
-    private GraphNode[] nodes;
+    protected GraphNode[] nodes;
     
     public SparseGraph(int nNodes) {
         this.nodes = new GraphNode[nNodes];
@@ -22,11 +22,25 @@ public class SparseGraph implements Graph {
     
     @Override
     public void link(int id1, int id2, double weight) {
-        nodes[id1].outEdges.add(new GraphEdge(id2, weight));
+        nodes[id1].outEdges.put(id2, weight);
     }
     
     @Override
     public List<GraphEdge> getOutEdges(int id) {
-        return nodes[id].outEdges;
+        ArrayList<GraphEdge> out = new ArrayList<GraphEdge>();
+        for(int childId : nodes[id].outEdges.keySet()) {
+            out.add(new GraphEdge(childId, nodes[id].outEdges.get(childId)));
+        }
+        return out;
+    }
+
+    @Override
+    public int numNodes() {
+        return nodes.length;
+    }
+
+    @Override
+    public void unlink(int id1, int id2) {
+        nodes[id1].outEdges.remove(id2);
     }
 }

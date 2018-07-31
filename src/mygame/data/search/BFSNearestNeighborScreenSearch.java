@@ -77,14 +77,14 @@ public class BFSNearestNeighborScreenSearch implements Runnable {
         for(int i = 0; i < X.length; i++) {
             Vector3f xWorldTransformed = pointTransform.mult(X[i], null);
             Vector3f xScreenPos = cam.getScreenCoordinates(xWorldTransformed);
-            assert(xScreenPos.getZ() == cam.distanceToNearPlane(xWorldTransformed));
             int pixelX = (int)xScreenPos.getX();
             int pixelY = (int)xScreenPos.getY();
             if(ArrayUtil.inBounds(tempIdBuffer, pixelX, pixelY)) {
                 if(tempIdBuffer[pixelX][pixelY] == -1) {
                     tempIdBuffer[pixelX][pixelY] = i;
                 } else {
-                    float samePixelPointDepth = cam.distanceToNearPlane(pointTransform.mult(X[tempIdBuffer[pixelX][pixelY]], null));
+                    Vector3f compareScreenPos = cam.getScreenCoordinates(pointTransform.mult(X[tempIdBuffer[pixelX][pixelY]], null));
+                    float samePixelPointDepth = compareScreenPos.getZ();
                     if(xScreenPos.getZ() < samePixelPointDepth) {
                         tempIdBuffer[pixelX][pixelY] = i;
                     }

@@ -31,6 +31,15 @@ public class LineCloud {
         }
     }
     
+    public LineCloud(AssetManager assetManager, Vector3f[] basePoints, Vector3f[] endPoints) {
+        for(int i = 0; i < basePoints.length; i++) {
+            Line l = new Line(basePoints[i], endPoints[i]);
+            Geometry g = new Geometry("Line " + Integer.toString(i), l);
+            g.setMaterial(new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md"));
+            cloudNode.attachChild(g);
+        }
+    }
+    
     public Node getCloudNode() {return cloudNode;}
     
     public void attachTo(Node n) {n.attachChild(cloudNode);}

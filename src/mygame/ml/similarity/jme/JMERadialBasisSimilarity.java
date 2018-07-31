@@ -3,9 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package mygame.ml;
+package mygame.ml.similarity.jme;
 
 import com.jme3.math.Vector3f;
+import mygame.ml.similarity.SimilarityMetric;
 
 /**
  *

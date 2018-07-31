@@ -80,10 +80,14 @@ public class PointCloud implements Updatable {
     
     
     public void setPoint(int index, CloudPoint newPoint) {
-        if(!newPoint.color.equals(this.points[index].color)) doUpdateColors = true;
-        if(!newPoint.point.equals(this.points[index].point)) doUpdatePoints = true;
-        if(newPoint.size != this.points[index].size) doUpdateSizes = true;
+        if(!newPoint.COLOR.equals(this.points[index].COLOR)) doUpdateColors = true;
+        if(!newPoint.POINT.equals(this.points[index].POINT)) doUpdatePoints = true;
+        if(newPoint.SIZE != this.points[index].SIZE) doUpdateSizes = true;
         this.points[index] = newPoint;
+    }
+    
+    public CloudPoint getPoint(int index) {
+        return points[index];
     }
     
     @Override

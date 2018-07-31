@@ -9,7 +9,7 @@ import mygame.graph.Graph;
 import mygame.graph.GraphEdge;
 import mygame.input.VolumetricToolInput;
 import mygame.ml.Segmenter;
-import mygame.ml.SimilarityMetric;
+import mygame.ml.similarity.SimilarityMetric;
 import mygame.pointcloud.InteractivePointCloud;
 import mygame.util.SegmenterUtils;
 import org.jblas.DoubleMatrix;

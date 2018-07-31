@@ -8,16 +8,38 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.math.Matrix3f;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
+import com.jme3.scene.Mesh;
+import com.jme3.scene.VertexBuffer.Type;
+import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Line;
+import com.jme3.util.BufferUtils;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import mygame.data.search.KDTree;
-import mygame.ml.JMEKMeansClusterer;
-import mygame.ml.JMERadialBasisSimilarity;
+import mygame.graph.Graph;
+import mygame.graph.SparseGraph;
+import mygame.ml.similarity.jme.JMEKMeansClusterer;
+import mygame.ml.similarity.jme.JMERadialBasisSimilarity;
+import mygame.pointcloud.CloudPoint;
 import mygame.pointcloud.LineCloud;
+import mygame.pointcloud.PointCloud;
+import mygame.util.GraphUtil;
 import mygame.util.JblasJMEConverter;
+import mygame.util.PointUtil;
 import mygame.volumetrics.CloudNormal;
+import mygame.volumetrics.surfaceextraction.convexhull.ConvexHull;
+import mygame.volumetrics.Facet;
+import mygame.volumetrics.HoppeMeshMaker;
+import mygame.volumetrics.surfaceextraction.NetCoord;
+import mygame.volumetrics.surfaceextraction.NaiveSurfaceNet;
+import mygame.volumetrics.surfaceextraction.SurfaceNetCube;
+import mygame.volumetrics.surfaceextraction.SurfaceNetCube;
+import mygame.volumetrics.Volume;
+import mygame.volumetrics.VolumeSolver;
 import org.jblas.DoubleMatrix;
+import org.lwjgl.opengl.GL11;
 
 /**
  * This is the Main Class of your Game. You should only do initialization here.
@@ -36,40 +58,69 @@ public class Main extends SimpleApplication {
     
     private VolumetricsCamera volCam;
     private InteractivePointCloud pointCloud;
-    //see: https://wiki.jmonkeyengine.org/jme3/beginner/hello_material.html
-    //for more info about transparent/non-opaque textures
+    
+    
     /*
     
+    TODO: ensure SimpleSurfaceNet creates surfaces with all CCW faces (possible to guarantee by setting a specific order
+    for how the neighbors to a NetCoord are returned?)
+    ---------------------------------------------------------------
+    
+    TODO: create a function that converts a Volume to a PointSubsetVolume, merging very near points to one, creating a global points list, and
+    setting the faces to have indexes for the appropriate vertices
+    
+    TODO: no reason to store DoubleMatrix in PointSubsetFacets (extra memory, would be better to just pass point set when needed) --
+    find some way to extend Facet that doesn't require the points. Could modify facet to store a generic for args (i.e. index facet would store an Integer[] array,
+    while normal facet without indices would store a DoubleMatrix[] array)
+    
+    
+    
+    TODO: SimpleSurfaceNet sometimes appears to have illegal edge connections that cross interior/other facets. Seems to only appear in areas of large curvature -- am
+    guessing it has something to do with the 3d marchiing cube border search window -- perhaps make the neighborhood of a coord only 4 coordinates,
+    oriented to best fit the tangent around its neighborhood? (Using smaller cube width minimizes (minimizes the surface area of erroneous triangles)
+    the issue, but it is still present). (Occurs when diagonal cubes are connected when coplanar cubes make a better fit
+    to the mesh. One route is to use the calculated normals to remove faces that strongly disagree with the normal,
+    but isn't an ideal fix)
+    
+    TODO: Figure out how to display wireframes/3d meshes -- using line clouds takes up a lot of memory. (see: https://wiki.jmonkeyengine.org/jme3/advanced/custom_meshes.html)
+    
+    NOTE: Normal orientation on cubes (because they have such sharp angles) requires a large PCA window (num neighbors) and/or a smaller
+    orientation neighbor flip search window (num neighbors) to work correctly (not doing so will leave holes in the generated model)
+    
+    TODO: oritented normals from calculation process more accurate than Volume's cross product -- use indices of facets to 
+    just average the normals calculated from my method when calculating volumes
+    
+    TODO: need to enable depth buffering. With point clouds, points definitely in front can get painted behind.
+    
+    
     Organization":
+  
+    Change hash code on int arr implementation to use HashUtil's methods
+    
+    Change kmeans jme clusterer to usedouble matrix
+    
+    Note: Many graph sparsity constraints prevent selection types that instead only check similarity to the click selection point
+    from working correctly (they do not contain direct links to all candidate points being checked)
+    
     
     Figure out how to segment, sensibly, between JBLAS and JME vectors. Irritating to keep switching back and forth and 
     implement overloaded methods to address both (i'm thinking default to Vector3f then switch to DoubleMatrix wherever more intense
     math is needed)
     
-    Create KDTree (abstract), then extend it with JblasKDTree (confusing to pass around Jblas trees in places where Vector3fs are used,
-    even though it works fine after fitting, since does everything in terms of ids)
-    
-    Don't pass around kdTree to segmenters, add methods to pointCloud that let you get nearest neighbors? (maybe not, there are a lot of things the KDTree can do...)
-    
-    Utilities that require centroid clusterers generally very often do not need a centroid clusterer, only to know
-    a map between points to cluster id... Either change name, or somehow remove dependency on centroids altogether
-    for the majority of applications that don't need them
-    
-    
     similarity metric compatiability with certain segmenters is hard to tell without looking at code (for example,
     constructing a distance weighted graph requires a JME metric and a JBlas metric)
     
+    
+    Nice-to-haves:
+    Double-edged graphs (doesn't speed anythign up, since nodes still need a double reference to each other, but prevents
+    the possibility of the programmer forgetting to make a graph symmetrical)
+    
     TODO: 
     
-    Change PCA graph construction to use a centroid clusterer, and set the normals of all points in a given cluster to the pca 
-    of the set that falls into the cluster ONLY
+    BIG BUG; Check all uses of cam.distanceToNearPlane -- does NOT return the same thing as cam.getScreenCoordinates(vec).getZ()!
     
-    Createa a normal orientation histogram?
-    
-    Graph construction is VERY slow but segmenting is fast...
-    
-    Add sparse graph creator that uses a number of neighbors isntead of a local neighborhood radius (if points very spaced,
-    could cause a lot of connected components to use within radius construction)
+    Make it possible to get a subset of outedges from a graph node (useful so that not all connections to a node are calculated on the fly
+    in the on the fly graph, if, for example, only nodes within a radius of the center are wanted)
     
     Can make graphs work with all points, but be very sparse, by utilizing the KDTree when constructing
     the graphs so that sufficiently far points do not have connection entries (use n nearest neighbors, or local
@@ -80,42 +131,153 @@ public class Main extends SimpleApplication {
     (better idea: create a nested object graph -- one with centroids, one without that is sparse, and
     the segmenters choose the one that better fits what it does. Represent this as graphMap<String (graph name), Graph>)
     
-    Somehow modify pointcloud and BFSNearestNeighborSearch so they can sensibly buffer together, and allows pointcloud to track which points are visible on screen
-    during the construction of the idBuffer. Then the set of points visible can be used to remove invisible points from computation during segmentation, etc. (not sure
-    how useful this actually ends up being?)
     
     Add a segmenter that grows a radius when user drags
     
     (Eventually...) create the model-to-cloud-fit algorithm
-    */
-    /*
-    Notes: if wanted a first person camera, create a camera position node, then attach a rotation node as its parent. Then rotate the rotation node to rotate
-    about camera pos, and translate the camera position mode to translate everything. Attach all things to be transformed to the camera position node
+    
+    
+    
+    -------------------
+    //see: https://wiki.jmonkeyengine.org/jme3/beginner/hello_material.html
+    //for more info about transparent/non-opaque textures
     */
     @Override
     public void simpleInitApp() {
         flyCam.setEnabled(false);
         volCam = new VolumetricsCamera(inputManager);
         volCam.attachCamera(rootNode);
+        test();
+        
+    }
+    
+    //assumes v has only triangular facets
+    private Mesh createNoIndexMesh(Volume v) {
+        Mesh mesh = new Mesh();
+        Vector3f[] vertices = new Vector3f[3*v.numFacets()];
+        int verticesInd = 0;
+        for(int i = 0; i < v.numFacets(); i++) {
+            Facet f = v.getFacet(i);
+            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(0))[0];
+            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(1))[0];
+            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(2))[0];
+        }
+        
+        mesh.setBuffer(Type.Position, 3, BufferUtils.createFloatBuffer(vertices));
+        mesh.updateBound();//can't remember if this is still supposed to be used.
+        return mesh;
+    }
+    
+    private Mesh createNoIndexMeshFromQuadFacetVolume(Volume v) {
+        Mesh mesh = new Mesh();
+        
+        Vector3f[] vertices = new Vector3f[2*3*v.numFacets()];
+        int verticesInd = 0;
+        for(int i = 0; i < v.numFacets(); i++) {
+            Facet f = v.getFacet(i);
+            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(0))[0];
+            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(1))[0];
+            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(2))[0];
+            
+            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(2))[0];
+            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(3))[0];
+            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(0))[0];
+        }
+        mesh.setBuffer(Type.Position, 3, BufferUtils.createFloatBuffer(vertices));
+        mesh.updateBound();
+        return mesh;
+    }
+    
+    
+    private void test() {
         
         
-        Vector3f[] points = generateCubesVec3f(100000, new Vector3f[] {Vector3f.ZERO, new Vector3f(3f, -3f, 5f)}, 
-                new float[] {2f, 3f});
-        
-        pointCloud = new InteractivePointCloud(assetManager, cam, points, new ColorRGBA(1f,0f,0f,1f), 10f, 
+        Vector3f[] points = Test.generateFilledCubeVec3f(10000, Vector3f.ZERO, 2f);//generateCubesVec3f(10000, new Vector3f[] {Vector3f.ZERO}, new float[]{2f});
+        pointCloud = new InteractivePointCloud(assetManager, cam, points, new ColorRGBA(1f,0f,0f,0f), 20f, 
                 inputManager);
         pointCloud.enableNNSearchThread(true);
         volCam.attachChildren(pointCloud.getCloudNode());
         pointCloud.getCloudNode().setLocalTranslation(0f,0f,0f);
         
-        /*
-        DoubleMatrix pointNormals = CloudNormal.getUnorientedPCANormals(JblasJMEConverter.toDoubleMatrix(points), 15);
-        LineCloud lineCloud = new LineCloud(assetManager, points, JblasJMEConverter.toVector3f(pointNormals), .25f);
-        volCam.attachChildren(lineCloud.getCloudNode());
-        */
+        
+        Volume convHull = ConvexHull.quickhull3d(JblasJMEConverter.toDoubleMatrix(points), new ArrayList<Integer[]>());
+        Mesh convHullMesh = createNoIndexMesh(convHull);
+        Geometry convHullGeom = new Geometry("convex hull geometry", convHullMesh);
+        Material convHullMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        convHullMat.setColor("Color", new ColorRGBA(1f,1f,0f,1f));
+        convHullMat.getAdditionalRenderState().setWireframe(true);
+        convHullMat.getAdditionalRenderState().setLineWidth(3f);
+        convHullGeom.setMaterial(convHullMat);
+        pointCloud.getCloudNode().attachChild(convHullGeom);
+        
+        System.out.println("VOLUME: " + VolumeSolver.calcVolume(convHull));
+        
+        
+        System.out.println("hi");
+        KDTree pointsKDTree = new KDTree(JblasJMEConverter.toDoubleMatrix(points).toArray2());
+        DoubleMatrix normals = CloudNormal.getUnorientedPCANormals(JblasJMEConverter.toDoubleMatrix(points), 
+                pointsKDTree, 100);
+        CloudNormal.hoppeOrientNormals(JblasJMEConverter.toDoubleMatrix(points), normals, pointsKDTree, 6);
+        
+        
+        Object[] surfaceNetOutput = NaiveSurfaceNet.getVolume(new HoppeMeshMaker(JblasJMEConverter.toDoubleMatrix(points), normals, pointsKDTree), 0, PointUtil.getPointBounds3d(
+        JblasJMEConverter.toDoubleMatrix(points)), 1);
+        
+        Volume volume = (Volume)surfaceNetOutput[0];
+        
+        
+        
+        
+        
+        
+        Map<NetCoord, SurfaceNetCube> cubeNet = (Map<NetCoord, SurfaceNetCube>) surfaceNetOutput[1];
+        
+        for(NetCoord key : cubeNet.keySet()) {
+            Box b = cubeNet.get(key).getGeom();
+            Material m = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+            m.setColor("Color", ColorRGBA.Yellow);
+            m.getAdditionalRenderState().setWireframe(true);
+            m.getAdditionalRenderState().setLineWidth(1f);
+            Geometry g = new Geometry("Box", b);
+            g.setMaterial(m);
+            //pointCloud.getCloudNode().attachChild(g);
+        }
+        
+        
+        
+        
+        Mesh volumeMesh = createNoIndexMesh(volume);
+        Geometry volumeGeom = new Geometry("volume geometry", volumeMesh);
+        Geometry volumeFrameGeom = new Geometry("volume frame geometry", volumeMesh);
+        Material volumeMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        Material volumeFrameMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        volumeFrameMat.setColor("Color", new ColorRGBA(1f,1f,0f,1f));
+        volumeFrameMat.getAdditionalRenderState().setWireframe(true);
+        volumeFrameMat.getAdditionalRenderState().setLineWidth(3f);
+        volumeMat.setColor("Color", new ColorRGBA(0f,0f,.5f, 1f));
+        volumeGeom.setMaterial(volumeMat);
+        volumeFrameGeom.setMaterial(volumeFrameMat);
+        //pointCloud.getCloudNode().attachChild(volumeGeom);
+        //pointCloud.getCloudNode().attachChild(volumeFrameGeom);
+        
+        
+        
+        Vector3f[] volStarts = new Vector3f[volume.numFacets()*3];
+        Vector3f[] volEnds = new Vector3f[volume.numFacets()*3];
+        for(int i = 0; i < volume.numFacets(); i++) {
+            volStarts[i*3] = JblasJMEConverter.toVector3f(volume.getFacet(i).getPointClones(0))[0];
+            volStarts[i*3 + 1] = JblasJMEConverter.toVector3f(volume.getFacet(i).getPointClones(1))[0];
+            volStarts[i*3 + 2] = JblasJMEConverter.toVector3f(volume.getFacet(i).getPointClones(2))[0];
+            
+            volEnds[i*3] = JblasJMEConverter.toVector3f(volume.getFacet(i).getPointClones(1))[0];
+            volEnds[i*3 + 1] = JblasJMEConverter.toVector3f(volume.getFacet(i).getPointClones(2))[0];
+            volEnds[i*3 + 2] = JblasJMEConverter.toVector3f(volume.getFacet(i).getPointClones(0))[0];
+        }
+        LineCloud volumeCloud = new LineCloud(assetManager, volStarts, volEnds);
+        pointCloud.getCloudNode().attachChild(volumeCloud.getCloudNode());
+        
     }
     
-
     /* Use the main event loop to trigger repeating actions. */
     @Override
     public void simpleUpdate(float tpf) {
@@ -123,71 +285,5 @@ public class Main extends SimpleApplication {
         pointCloud.update(tpf);
     }
     
-    private Vector3f[] generateCubesVec3f(int nPointsPerCube, Vector3f[] centers, float[] radiuses) {
-        Vector3f[] out = new Vector3f[nPointsPerCube*centers.length];
-        for(int cubeNum = 0; cubeNum < centers.length; cubeNum++) {
-            Vector3f[] cube = generateCubeVec3f(nPointsPerCube, centers[cubeNum], radiuses[cubeNum]);
-            for(int i = 0; i < cube.length; i++) {
-                out[cubeNum*nPointsPerCube + i] = cube[i];
-            }
-        }
-        return out;
-    }
-    
-    private Vector3f[] generateCubeVec3f(int nPoints, Vector3f center, float radius) {
-        float halfRadius = radius/2f;
-        Matrix3f cubeBasises = new Matrix3f(halfRadius, 0f, 0f,
-        0f, halfRadius, 0f,
-        0f, 0f, halfRadius);
-        Vector3f[] points = new Vector3f[nPoints];
-        
-        for(int i = 0; i < nPoints; i++) {
-            
-            float[][] mixMatArr = new float[3][3];
-            int fixedSide = (int)(Math.random()*3);
-            for(int j = 0; j < mixMatArr.length; j++){
-                if(j == fixedSide) {
-                    mixMatArr[j][j] = (float)((Math.random() < 0.5)? -1:1);
-                } else {
-                    mixMatArr[j][j] = (float)(2*(Math.random()-.5));
-                }
-            }
-            Matrix3f mixMat = new Matrix3f();
-            mixMat.set(mixMatArr);
-            mixMat = mixMat.mult(cubeBasises);
-            Vector3f point = center;
-            for(int j = 0; j < 3; j++) {
-                point = point.add(mixMat.getRow(j));
-            }
-            points[i] = point;
-        }
-        return points;
-    }
-    
-    private Vector3f[] generateSpheresVec3f(int nPointsPerSphere, Vector3f[] centers, float[] radiuses) {
-        Vector3f[] out = new Vector3f[nPointsPerSphere*centers.length];
-        for(int sphereNum = 0; sphereNum < centers.length; sphereNum++) {
-            Vector3f[] points = generateSphereVec3f(nPointsPerSphere, centers[sphereNum], radiuses[sphereNum]);
-            for(int i = 0; i < nPointsPerSphere; i++){
-                out[sphereNum*nPointsPerSphere + i] = points[i];
-            }
-        }
-        return out;
-    }
-    
-    private Vector3f[] generateSphereVec3f(int nPoints, Vector3f center, float r) {
-        Vector3f[] out = new Vector3f[nPoints];
-        for(int i = 0; i < nPoints; i++) {
-            out[i] = new Vector3f();
-            float z = (float)(2*r*(Math.random()-.5));
-            float rHeight = (float)Math.sqrt((r*r - z*z));
-            float theta = (float)(2*Math.PI*Math.random());
-            out[i].setX((float)(rHeight * Math.sin(theta)));
-            out[i].setY((float)(rHeight * Math.cos(theta)));
-            out[i].setZ(z);
-            out[i] = out[i].add(center);
-        }
-        return out;
-    }
     
 }

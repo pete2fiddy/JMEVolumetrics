@@ -1,11 +1,12 @@
 package mygame.graph;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class GraphNode {
     
     protected final int ID;
-    protected ArrayList<GraphEdge> outEdges = new ArrayList<GraphEdge>();
+    protected HashMap<Integer, Double> outEdges = new HashMap<Integer, Double>();
     
     public GraphNode(int id) {
         this.ID = id;

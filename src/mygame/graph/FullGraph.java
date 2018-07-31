@@ -14,6 +14,8 @@ import org.jblas.DoubleMatrix;
  * @author Owner
  */
 public class FullGraph implements Graph {
+    //uses DoubleMatrix instead of double[][] for ease of multiplying and performing matrix operations on the graph, should that
+    //be implemented in the future;
     private DoubleMatrix graph;
     
     public FullGraph(int nNodes) {
@@ -30,9 +32,22 @@ public class FullGraph implements Graph {
         //not sure how slow instantiating GraphEdges like this is
         ArrayList<GraphEdge> out = new ArrayList<GraphEdge>();
         for(int i = 0; i < graph.columns; i++) {
-            out.add(new GraphEdge(i, graph.get(id, i)));
+            if(graph.get(id, i) == 0) {
+                //assumes 0-weight edges are unconnected
+                out.add(new GraphEdge(i, graph.get(id, i)));
+            }
         }
         return out;
+    }
+
+    @Override
+    public int numNodes() {
+        return graph.rows;
+    }
+
+    @Override
+    public void unlink(int id1, int id2) {
+        graph.put(id1, id2, 0);
     }
     
 }

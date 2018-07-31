@@ -161,6 +161,16 @@ public class VolumetricsCamera implements Updatable {
         if(discreteActionStates.get("ROTATE_TOGGLE")) {
             Vector2f mouseDelta = newMousePos.subtract(mousePos);
             Vector2f rotateToggleDelta = newMousePos.subtract(lastRotateOrDragTogglePos);
+            
+            //comment out below to turn off free rotation
+            cameraNode.spinLeftRight(mouseDelta.x*ROTATE_VELOCITY_PER_PIXEL);
+            float newDownUpSpin = cameraNode.getDownUpSpin()-mouseDelta.y*ROTATE_VELOCITY_PER_PIXEL;
+            if(newDownUpSpin < 0) newDownUpSpin = 0f;
+            if(newDownUpSpin > Math.PI/2.0) newDownUpSpin = (float)(Math.PI/2.0);
+            cameraNode.setDownUpSpin(newDownUpSpin);
+            
+            //comment out below to turn off choosing only one rotation direction at a time 
+           /*
             if(Math.abs(rotateToggleDelta.x) > Math.abs(rotateToggleDelta.y)){
                 cameraNode.spinLeftRight(mouseDelta.x*ROTATE_VELOCITY_PER_PIXEL);
             } else {
@@ -169,6 +179,7 @@ public class VolumetricsCamera implements Updatable {
                 if(newDownUpSpin > Math.PI/2.0) newDownUpSpin = (float)(Math.PI/2.0);
                 cameraNode.setDownUpSpin(newDownUpSpin);
             }
+            */
         }
         if(discreteActionStates.get("DRAG_TOGGLE")) {
             Vector2f mouseDelta = newMousePos.subtract(mousePos);

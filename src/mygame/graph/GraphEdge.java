@@ -14,4 +14,9 @@ public class GraphEdge {
         if(!(o instanceof GraphEdge)) return false;
         return ((GraphEdge)o).CHILD_ID == CHILD_ID && ((GraphEdge)o).WEIGHT == WEIGHT;
     }
+    
+    @Override
+    public String toString() {
+        return "Graph Edge: " + Integer.toString(CHILD_ID) + ", " + Double.toString(WEIGHT);
+    }
 }

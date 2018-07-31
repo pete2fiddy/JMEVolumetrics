@@ -3,12 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package mygame.ml;
+package mygame.ml.similarity.jme;
 
+import mygame.ml.JMEKMeans;
 import com.jme3.math.Vector3f;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import mygame.ml.CentroidClusterer;
 
 /**
  *

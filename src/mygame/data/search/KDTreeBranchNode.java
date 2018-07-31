@@ -109,8 +109,4 @@ public class KDTreeBranchNode implements KDTreeNode {
         }
         return childSplits;
     }
-
-    
-    
-    
 }

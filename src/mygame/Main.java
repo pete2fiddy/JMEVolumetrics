@@ -163,7 +163,7 @@ public class Main extends SimpleApplication {
     private void test() {
         
         
-        Vector3f[] points = Test.generateSphereVec3f(10000, Vector3f.ZERO, 2f);//generateCubesVec3f(10000, new Vector3f[] {Vector3f.ZERO}, new float[]{2f});
+        Vector3f[] points = Test.generateSphereVec3f(10000, Vector3f.ZERO, 2f);
         pointCloud = new InteractivePointCloud(assetManager, cam, points, new ColorRGBA(1f,0f,0f,0f), 40f, 
                 inputManager);
         pointCloud.enableNNSearchThread(true);
@@ -178,7 +178,7 @@ public class Main extends SimpleApplication {
         
         
         DoubleMatrix normals = CloudNormal.getUnorientedPCANormals(JblasJMEConverter.toDoubleMatrix(points), 
-                pointsKDTree, 50);
+                pointsKDTree, 30);
         CloudNormal.hoppeOrientNormals(JblasJMEConverter.toDoubleMatrix(points), normals, pointsKDTree, 6);
         
         //LineCloud normalCloud = new LineCloud(assetManager, points, JblasJMEConverter.toVector3f(normals), 1);
@@ -189,7 +189,7 @@ public class Main extends SimpleApplication {
         //can leave holes if not enough points used for reconstruction. Likely just a flaw with Hoppe's isosurface function, though.
         Volume volume = NaiveSurfaceNet.getVolume(new HoppeMeshMaker(JblasJMEConverter.toDoubleMatrix(points), normals, pointsKDTree), 0, PointUtil.getPointBounds3d(
         JblasJMEConverter.toDoubleMatrix(points)), cubeWidth, 1);
-        IndexedVolume indexedVolume = VolumeUtil.convertToIndexedVolume(volume, 0.005);
+        IndexedVolume indexedVolume = VolumeUtil.convertToIndexedVolume(volume, 0.000005);
         VolumeUtil.useCloudNormalsToOrientFaces(pointsKDTree, normals, indexedVolume);
         VolumeUtil.useCloudNormalsToOrientFaces(pointsKDTree, normals, volume);
         
@@ -204,12 +204,12 @@ public class Main extends SimpleApplication {
             m.getAdditionalRenderState().setLineWidth(1f);
             Geometry g = new Geometry("Box", b);
             g.setMaterial(m);
-            pointCloud.getCloudNode().attachChild(g);
+            //pointCloud.getCloudNode().attachChild(g);
         }
         
         
-        /*
-        Mesh volumeMesh = MeshUtil.createIndexedMesh(indexedVolume);
+        
+        Mesh volumeMesh = MeshUtil.createNoIndexMesh(volume);//createIndexedMesh(indexedVolume);
         Geometry volumeGeom = new Geometry("volume geometry", volumeMesh);
         Geometry volumeFrameGeom = new Geometry("volume frame geometry", volumeMesh);
         Material volumeMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
@@ -221,17 +221,13 @@ public class Main extends SimpleApplication {
         volumeGeom.setMaterial(volumeMat);
         volumeFrameGeom.setMaterial(volumeFrameMat);
         //pointCloud.getCloudNode().attachChild(volumeGeom);
-        //pointCloud.getCloudNode().attachChild(volumeFrameGeom);
-        */
+        pointCloud.getCloudNode().attachChild(volumeFrameGeom);
         
-        LineCloud volumeCloud = MeshUtil.createLineCloudWireframe(assetManager, indexedVolume);
-        pointCloud.getCloudNode().attachChild(volumeCloud.getCloudNode());
+        System.out.println("VOLUME not indexed: " + VolumeSolver.calcVolume(volume));
+        System.out.println("VOLUME indexed: " + VolumeSolver.calcVolume(indexedVolume));
+        System.out.println("non indexed num facets: " + volume.numFacets());
+        System.out.println("indexed num facets: " + indexedVolume.numFacets());
         
-        
-        PointCloud volumePoints = new PointCloud(assetManager, cam, JblasJMEConverter.toVector3f(VolumeUtil.getPoints(indexedVolume)), new ColorRGBA(1f, 0f, 0f, 1f), 100f);
-        pointCloud.getCloudNode().attachChild(volumePoints.getCloudNode());
-        System.out.println("VOLUME: " + VolumeSolver.calcVolume(indexedVolume));
-        System.out.println("VOLUME NUM FACETS: " + volume.numFacets());
     }
     
     /* Use the main event loop to trigger repeating actions. */

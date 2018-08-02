@@ -40,6 +40,6 @@ public class Volume {
         for(int i = 0; i < toFlip.numPoints(); i++) {
             flippedPoints.putRow(flippedPoints.rows-1-i, toFlip.getPointClones(i));
         }
-        facets.add(new Facet(flippedPoints));
+        facets.add(facetNum, new Facet(flippedPoints));
     }
 }

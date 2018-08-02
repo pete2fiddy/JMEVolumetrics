@@ -1,5 +1,6 @@
 package mygame.data.search;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.PriorityQueue;
@@ -59,7 +60,6 @@ public class KDTreeBranchNode implements KDTreeNode {
             } else {
                 //is a leaf
                 if(childSplits[i].size() == 1) {
-                    Integer[] splitArr = childSplits[i].toArray(new Integer[childSplits[i].size()]);
                     children[i] =  new KDTreeValueLeafNode();
                 } else {
                     children[i] = null;
@@ -101,12 +101,32 @@ public class KDTreeBranchNode implements KDTreeNode {
             childSplits[i] = new HashSet<Integer>();
         }
         for(int id : remainingIds) {
-            if(X[id][SPLIT_AXIS] <= splitValue) {
+            //not sure if this should be < or <= -- was crashing on cases with 
+            //two in the subset if they were almost exactly identical points to each other,
+            //but with some lossiness (duplicate removal doesn't remove them, but they are considered 
+            //close enough to be considered equal)
+            if(X[id][SPLIT_AXIS] < splitValue) {
                 childSplits[0].add(id);
             } else {
                 childSplits[1].add(id);
             }
         }
         return childSplits;
+    }
+
+    @Override
+    public String getPointPath(double[] p) {
+        String out = "";
+        out += "p[" + Integer.toString(SPLIT_AXIS) +"] = " + Double.toString(p[SPLIT_AXIS]) + " ";
+        if(p[SPLIT_AXIS] < splitValue) {
+            out += "< " + Double.toString(splitValue) + " --> ";
+            if(children[0] == null) return "BRANCH NULL, TERMINATING!";
+            out += children[0].getPointPath(p);
+        } else {
+            out += "> " + Double.toString(splitValue) + " --> ";
+            if(children[1] == null) return "BRANCH NULL, TERMINATING!";
+            out += children[1].getPointPath(p);
+        }
+        return out;
     }
 }

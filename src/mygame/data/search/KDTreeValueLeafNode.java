@@ -38,4 +38,9 @@ public class KDTreeValueLeafNode implements KDTreeNode {
     public void setNeighborsWithinRadius(double[][] X, double[] centerPoint, double radius, double radiusSquared, Set<Integer> withinRadius) {
         if(sqrDistBetween(X[leafId], centerPoint) < radiusSquared) withinRadius.add(leafId);
     }
+
+    @Override
+    public String getPointPath(double[] p) {
+        return "Return ID: " + Integer.toString(leafId);
+    }
 }

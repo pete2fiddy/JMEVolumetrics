@@ -13,4 +13,6 @@ public interface KDTreeNode {
     //both radius and radiusSquared given since both will be used fairly often
     public void setNeighborsWithinRadius(double[][] X, double[] centerPoint, double radius, double radiusSquared, Set<Integer> withinRadius); 
     
+    //prints the contribution of the tree node to the final path of the point as it trickles down the tree. Can remove later if I ever implement a new KDTreeNode, but is used for testing for now
+    public String getPointPath(double[] p);
 }

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import mygame.volumetrics.Facet;
+import mygame.volumetrics.IndexedVolume;
 import mygame.volumetrics.Volume;
 import org.jblas.DoubleMatrix;
 import org.jblas.Solve;
@@ -19,14 +20,14 @@ public class ConvexHull {
     /*
     returns a volume of points, X's, convex hull, with a list detailing the indices of the corresponding faces in the output volume. Faces are already correctly oriented.
     */
-    public static Volume quickhull3d(DoubleMatrix X, List<Integer[]> inds) {
+    public static IndexedVolume quickhull3d(DoubleMatrix X) {
         ConvHullVolume out = initConvHull(X);
         Set<Integer> remainingPoints = new HashSet<Integer>();
         for(int i = 0; i < X.rows; i++) {
             remainingPoints.add(i);
         }
         for(int facetNum = 0; facetNum < out.numFacets(); facetNum++) {
-            Integer[] facetInds = out.getFacetInds(facetNum);
+            int[] facetInds = out.getFacetInds(facetNum);
             for(int i : facetInds) {
                 remainingPoints.remove(i);
             }
@@ -42,14 +43,13 @@ public class ConvexHull {
             Set<IndexedFacetEdge> horizonRidge = out.getHorizonRidge(X.getRow(farthestPoint), visInvisFacets);
             
             for(int visibleFacetNum : visInvisFacets[0]) {
-                Integer[] visFacetInds = out.getFacetInds(visibleFacetNum);
+                int[] visFacetInds = out.getFacetInds(visibleFacetNum);
                 remainingPoints.removeAll(getPointsWithinHull(X, remainingPoints, constructSimplexFromBaseAndPoint(X, visFacetInds[0], visFacetInds[1], visFacetInds[2], farthestPoint)));
                 out.removeFacet(visibleFacetNum);
             }
             
             for(IndexedFacetEdge horizonEdge : horizonRidge) {
-                out.addFacet(X, horizonEdge.X_INDS[0], horizonEdge.X_INDS[1], farthestPoint);
-                
+                out.addFacet(horizonEdge.X_INDS[0], horizonEdge.X_INDS[1], farthestPoint);
             }
             
             
@@ -57,7 +57,7 @@ public class ConvexHull {
             //is doing extra computation work by using the entire convex hull instead of only simplices created from farthestPoint and visible faces
             remainingPoints.removeAll(getPointsWithinHull(X, remainingPoints, out));
         }
-        return out.toVolume(inds);
+        return (IndexedVolume)out;
     }
     
     
@@ -84,11 +84,11 @@ public class ConvexHull {
     }
     
     private static ConvHullVolume constructSimplexFromBaseAndPoint(DoubleMatrix X, int baseP1, int baseP2, int baseP3, int addPoint) {
-        ConvHullVolume out = new ConvHullVolume();
-        out.addFacet(X, baseP3, baseP2, baseP1);
-        out.addFacet(X, baseP1, baseP2, addPoint);
-        out.addFacet(X, baseP2, baseP3, addPoint);
-        out.addFacet(X, baseP3, baseP1, addPoint);
+        ConvHullVolume out = new ConvHullVolume(X);
+        out.addFacet(baseP3, baseP2, baseP1);
+        out.addFacet(baseP1, baseP2, addPoint);
+        out.addFacet(baseP2, baseP3, addPoint);
+        out.addFacet(baseP3, baseP1, addPoint);
         return out;
     }
     

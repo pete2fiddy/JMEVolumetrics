@@ -24,6 +24,10 @@ public class NaiveSurfaceNet {
     new EdgeLink(5,6),
     new EdgeLink(4,5)};
     
+    /*
+    returning Object[] array is for troubleshooting -- knowing stuff like the intersecting cubes is helpful.
+    Won't be in final implementation
+    */
     public static Object[] getVolume(ScalarField<DoubleMatrix> scalarFunc, double isoValue, double[][] iterBounds, double cubeWidth) {
         Map<NetCoord, SurfaceNetCube> coordCubeMap = getIntersectingCubes(scalarFunc, isoValue, iterBounds, cubeWidth);
         

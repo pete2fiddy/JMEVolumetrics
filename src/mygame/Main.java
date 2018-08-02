@@ -14,6 +14,7 @@ import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Line;
 import com.jme3.util.BufferUtils;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -27,11 +28,14 @@ import mygame.pointcloud.LineCloud;
 import mygame.pointcloud.PointCloud;
 import mygame.util.GraphUtil;
 import mygame.util.JblasJMEConverter;
+import mygame.util.MeshUtil;
 import mygame.util.PointUtil;
+import mygame.util.VolumeUtil;
 import mygame.volumetrics.CloudNormal;
 import mygame.volumetrics.surfaceextraction.convexhull.ConvexHull;
 import mygame.volumetrics.Facet;
 import mygame.volumetrics.HoppeMeshMaker;
+import mygame.volumetrics.IndexedVolume;
 import mygame.volumetrics.surfaceextraction.NetCoord;
 import mygame.volumetrics.surfaceextraction.NaiveSurfaceNet;
 import mygame.volumetrics.surfaceextraction.SurfaceNetCube;
@@ -102,6 +106,7 @@ public class Main extends SimpleApplication {
     Note: Many graph sparsity constraints prevent selection types that instead only check similarity to the click selection point
     from working correctly (they do not contain direct links to all candidate points being checked)
     
+    Create simple connected/not connected graph type without values.
     
     Figure out how to segment, sensibly, between JBLAS and JME vectors. Irritating to keep switching back and forth and 
     implement overloaded methods to address both (i'm thinking default to Vector3f then switch to DoubleMatrix wherever more intense
@@ -151,48 +156,12 @@ public class Main extends SimpleApplication {
         
     }
     
-    //assumes v has only triangular facets
-    private Mesh createNoIndexMesh(Volume v) {
-        Mesh mesh = new Mesh();
-        Vector3f[] vertices = new Vector3f[3*v.numFacets()];
-        int verticesInd = 0;
-        for(int i = 0; i < v.numFacets(); i++) {
-            Facet f = v.getFacet(i);
-            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(0))[0];
-            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(1))[0];
-            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(2))[0];
-        }
-        
-        mesh.setBuffer(Type.Position, 3, BufferUtils.createFloatBuffer(vertices));
-        mesh.updateBound();//can't remember if this is still supposed to be used.
-        return mesh;
-    }
-    
-    private Mesh createNoIndexMeshFromQuadFacetVolume(Volume v) {
-        Mesh mesh = new Mesh();
-        
-        Vector3f[] vertices = new Vector3f[2*3*v.numFacets()];
-        int verticesInd = 0;
-        for(int i = 0; i < v.numFacets(); i++) {
-            Facet f = v.getFacet(i);
-            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(0))[0];
-            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(1))[0];
-            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(2))[0];
-            
-            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(2))[0];
-            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(3))[0];
-            vertices[verticesInd++] = JblasJMEConverter.toVector3f(f.getPointClones(0))[0];
-        }
-        mesh.setBuffer(Type.Position, 3, BufferUtils.createFloatBuffer(vertices));
-        mesh.updateBound();
-        return mesh;
-    }
     
     
     private void test() {
         
         
-        Vector3f[] points = Test.generateFilledCubeVec3f(10000, Vector3f.ZERO, 2f);//generateCubesVec3f(10000, new Vector3f[] {Vector3f.ZERO}, new float[]{2f});
+        Vector3f[] points = Test.generateSphereVec3f(10000, Vector3f.ZERO, 2f);//generateCubesVec3f(10000, new Vector3f[] {Vector3f.ZERO}, new float[]{2f});
         pointCloud = new InteractivePointCloud(assetManager, cam, points, new ColorRGBA(1f,0f,0f,0f), 20f, 
                 inputManager);
         pointCloud.enableNNSearchThread(true);
@@ -200,8 +169,9 @@ public class Main extends SimpleApplication {
         pointCloud.getCloudNode().setLocalTranslation(0f,0f,0f);
         
         
-        Volume convHull = ConvexHull.quickhull3d(JblasJMEConverter.toDoubleMatrix(points), new ArrayList<Integer[]>());
-        Mesh convHullMesh = createNoIndexMesh(convHull);
+        /*
+        IndexedVolume convHull = ConvexHull.quickhull3d(JblasJMEConverter.toDoubleMatrix(points));
+        Mesh convHullMesh = MeshUtil.createIndexedMesh(convHull);
         Geometry convHullGeom = new Geometry("convex hull geometry", convHullMesh);
         Material convHullMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         convHullMat.setColor("Color", new ColorRGBA(1f,1f,0f,1f));
@@ -211,23 +181,29 @@ public class Main extends SimpleApplication {
         pointCloud.getCloudNode().attachChild(convHullGeom);
         
         System.out.println("VOLUME: " + VolumeSolver.calcVolume(convHull));
+        */
         
         
-        System.out.println("hi");
         KDTree pointsKDTree = new KDTree(JblasJMEConverter.toDoubleMatrix(points).toArray2());
+        
+        
+        
+        
         DoubleMatrix normals = CloudNormal.getUnorientedPCANormals(JblasJMEConverter.toDoubleMatrix(points), 
-                pointsKDTree, 100);
+                pointsKDTree, 50);
         CloudNormal.hoppeOrientNormals(JblasJMEConverter.toDoubleMatrix(points), normals, pointsKDTree, 6);
         
         
+        //LineCloud normalCloud = new LineCloud(assetManager, points, JblasJMEConverter.toVector3f(normals), 1);
+        //pointCloud.getCloudNode().attachChild(normalCloud.getCloudNode());
+        
+        
+        //can leave holes if not enough points used for reconstruction. Likely just a flaw with Hoppe's isosurface function, though.
         Object[] surfaceNetOutput = NaiveSurfaceNet.getVolume(new HoppeMeshMaker(JblasJMEConverter.toDoubleMatrix(points), normals, pointsKDTree), 0, PointUtil.getPointBounds3d(
         JblasJMEConverter.toDoubleMatrix(points)), 1);
-        
         Volume volume = (Volume)surfaceNetOutput[0];
-        
-        
-        
-        
+        IndexedVolume indexedVolume = VolumeUtil.convertToIndexedVolume(volume, .005);
+        VolumeUtil.orientFaces(indexedVolume);
         
         
         Map<NetCoord, SurfaceNetCube> cubeNet = (Map<NetCoord, SurfaceNetCube>) surfaceNetOutput[1];
@@ -245,35 +221,23 @@ public class Main extends SimpleApplication {
         
         
         
-        
-        Mesh volumeMesh = createNoIndexMesh(volume);
+        Mesh volumeMesh = MeshUtil.createIndexedMesh(indexedVolume);
         Geometry volumeGeom = new Geometry("volume geometry", volumeMesh);
         Geometry volumeFrameGeom = new Geometry("volume frame geometry", volumeMesh);
         Material volumeMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         Material volumeFrameMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        volumeFrameMat.setColor("Color", new ColorRGBA(1f,1f,0f,1f));
+        volumeFrameMat.setColor("Color", new ColorRGBA(0f,0f,0.5f,1f));
         volumeFrameMat.getAdditionalRenderState().setWireframe(true);
         volumeFrameMat.getAdditionalRenderState().setLineWidth(3f);
         volumeMat.setColor("Color", new ColorRGBA(0f,0f,.5f, 1f));
         volumeGeom.setMaterial(volumeMat);
         volumeFrameGeom.setMaterial(volumeFrameMat);
-        //pointCloud.getCloudNode().attachChild(volumeGeom);
+        pointCloud.getCloudNode().attachChild(volumeGeom);
         //pointCloud.getCloudNode().attachChild(volumeFrameGeom);
         
         
         
-        Vector3f[] volStarts = new Vector3f[volume.numFacets()*3];
-        Vector3f[] volEnds = new Vector3f[volume.numFacets()*3];
-        for(int i = 0; i < volume.numFacets(); i++) {
-            volStarts[i*3] = JblasJMEConverter.toVector3f(volume.getFacet(i).getPointClones(0))[0];
-            volStarts[i*3 + 1] = JblasJMEConverter.toVector3f(volume.getFacet(i).getPointClones(1))[0];
-            volStarts[i*3 + 2] = JblasJMEConverter.toVector3f(volume.getFacet(i).getPointClones(2))[0];
-            
-            volEnds[i*3] = JblasJMEConverter.toVector3f(volume.getFacet(i).getPointClones(1))[0];
-            volEnds[i*3 + 1] = JblasJMEConverter.toVector3f(volume.getFacet(i).getPointClones(2))[0];
-            volEnds[i*3 + 2] = JblasJMEConverter.toVector3f(volume.getFacet(i).getPointClones(0))[0];
-        }
-        LineCloud volumeCloud = new LineCloud(assetManager, volStarts, volEnds);
+        LineCloud volumeCloud = MeshUtil.createLineCloudWireframe(assetManager, indexedVolume);
         pointCloud.getCloudNode().attachChild(volumeCloud.getCloudNode());
         
     }

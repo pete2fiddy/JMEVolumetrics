@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import mygame.volumetrics.Facet;
+import mygame.volumetrics.IndexedVolume;
 import mygame.volumetrics.Volume;
 import org.jblas.DoubleMatrix;
 
@@ -17,8 +18,11 @@ import org.jblas.DoubleMatrix;
  *
  * @author Owner
  */
-public class ConvHullVolume extends Volume {
-    private List<Integer[]> facetInds = new ArrayList<Integer[]>();
+public class ConvHullVolume extends IndexedVolume {
+    
+    public ConvHullVolume(DoubleMatrix points) {
+        super(points);
+    }
     
     /*
     returns a set of edges (oriented such that edge[0] -> edge[1] is CCW) of the horizon line given an eyePoint
@@ -38,8 +42,6 @@ public class ConvHullVolume extends Volume {
         return edgeUnion;
     }
     
-    public Integer[] getFacetInds(int facetNum) {return facetInds.get(facetNum);}
-    
     public Set<Integer>[] getOutsideSets(DoubleMatrix X, Set<Integer> remainingPoints) {
         Set<Integer>[] out = new Set[numFacets()];
         for(int i = 0; i < numFacets(); i++) {
@@ -56,21 +58,6 @@ public class ConvHullVolume extends Volume {
         return out;
     }
 
-    public void addFacet(DoubleMatrix X, int... inds) {
-        Integer[] addInds = new Integer[inds.length];
-        for(int i = 0; i < inds.length; i++) {
-            addInds[i] = inds[i];
-        }
-        facetInds.add(numFacets(), addInds);
-        super.addFacet(numFacets(), new Facet(X.getRows(inds)));
-    }
-    
-    @Override
-    public Facet removeFacet(int i) {
-        facetInds.remove(i);
-        return super.removeFacet(i);
-    }
-    
     public boolean containsPoint(DoubleMatrix p) {
         for(int i = 0; i < numFacets(); i++) {
             if(getFacet(i).signedDistanceToPoint(p) > 0) return false;
@@ -87,7 +74,7 @@ public class ConvHullVolume extends Volume {
             visibleInvisibleEdges[i] = new HashSet<IndexedFacetEdge>();
             for(int facetNum : visibleInvisibleFaces[i]) {
                 Facet facet = getFacet(facetNum);
-                Integer[] inds = facetInds.get(facetNum);
+                int[] inds = getFacetInds(facetNum);
                 for(int facetPoint = 0; facetPoint < inds.length; facetPoint++) {
                     int[] addEdge = (i == 1)? new int[] {inds[(facetPoint+1)%inds.length], 
                         inds[facetPoint]} : new int[] {inds[facetPoint], 
@@ -138,12 +125,4 @@ public class ConvHullVolume extends Volume {
         return new int[] {maxDistFace, maxDistInd};
     }
     
-    public Volume toVolume(List<Integer[]> inds) {
-        Volume out = new Volume();
-        for(int i = 0; i < numFacets(); i++) {
-            out.addFacet(0, getFacet(i));
-            inds.add(facetInds.get(i));
-        }
-        return out;
-    }
 }

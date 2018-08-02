@@ -33,4 +33,13 @@ public class Volume {
     public int numFacets() {return facets.size();}
     
     public Facet removeFacet(int i) {return facets.remove(i);}
+    
+    public void flipOrientation(int facetNum) {
+        Facet toFlip = facets.remove(facetNum);
+        DoubleMatrix flippedPoints = new DoubleMatrix(toFlip.numPoints(), 3);
+        for(int i = 0; i < toFlip.numPoints(); i++) {
+            flippedPoints.putRow(flippedPoints.rows-1-i, toFlip.getPointClones(i));
+        }
+        facets.add(new Facet(flippedPoints));
+    }
 }

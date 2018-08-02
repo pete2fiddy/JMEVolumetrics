@@ -18,6 +18,7 @@ public class IndexedVolume extends Volume {
     
     public int[] getFacetInds(int facetNum) {return facetInds.get(facetNum);}
     
+    @Override
     public void flipOrientation(int facetNum) {
         int[] unflipped = facetInds.get(facetNum);
         removeFacet(facetNum);
@@ -30,8 +31,6 @@ public class IndexedVolume extends Volume {
     
     public void addFacet(int... inds) {
         facetInds.add(0, inds);
-        System.out.println("INDS: " + Arrays.toString(inds));
-        System.out.println("------------");
         super.addFacet(0, new Facet(points.getRows(inds)));
     }
     

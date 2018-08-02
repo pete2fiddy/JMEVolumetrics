@@ -28,7 +28,8 @@ public class Facet {
     public double signedDistanceToPoint(DoubleMatrix p) {
         return p.sub(points.getRow(0)).dot(normal);
     }
-
+    
+    
     public int getFarthestPoint(DoubleMatrix X) {
         int maxInd = 0;
         double maxDist = -Double.MAX_VALUE;

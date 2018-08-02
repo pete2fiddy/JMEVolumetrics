@@ -17,4 +17,9 @@ public class MathUtil {
         u.get(2)*v.get(0) - u.get(0)*v.get(2),
         u.get(0)*v.get(1) - u.get(1)*v.get(0)}});
     }
+    
+    public static double cosAngleBetween(DoubleMatrix v1, DoubleMatrix v2) {
+        double dot = v1.dot(v2);
+        return dot/(v1.norm2() * v2.norm2());
+    }
 }

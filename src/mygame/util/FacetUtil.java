@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Set;
 import mygame.graph.Graph;
 import mygame.graph.SparseGraph;
+import mygame.volumetrics.Facet;
+import org.jblas.DoubleMatrix;
 
 
 public class FacetUtil {
@@ -65,5 +67,14 @@ public class FacetUtil {
         }
         return false;
         
+    }
+    
+    
+    public static DoubleMatrix getMeanPoint(Facet f) {
+        DoubleMatrix out = DoubleMatrix.zeros(3);
+        for(int i = 0; i < f.numPoints(); i++) {
+            out = out.add(f.getPointClones(i));
+        }
+        return out.div((double)f.numPoints());
     }
 }

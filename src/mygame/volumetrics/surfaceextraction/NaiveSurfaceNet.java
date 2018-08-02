@@ -27,12 +27,25 @@ public class NaiveSurfaceNet {
     /*
     returning Object[] array is for troubleshooting -- knowing stuff like the intersecting cubes is helpful.
     Won't be in final implementation
+    
+    
     */
-    public static Object[] getVolume(ScalarField<DoubleMatrix> scalarFunc, double isoValue, double[][] iterBounds, double cubeWidth) {
+    
+    public static Volume getVolume(ScalarField<DoubleMatrix> scalarFunc, double isoValue, double[][] iterBounds, double cubeWidth, double nCubesMargin) {
+        return getVolume(scalarFunc, isoValue, bufferBounds(iterBounds, cubeWidth*nCubesMargin), cubeWidth);
+    }
+    
+    private static double[][] bufferBounds(double[][] bounds, double bufferAmount) {
+        double[][] out = new double[bounds.length][bounds[0].length];
+        for(int i = 0; i < out.length; i++) {
+            out[i][0] = bounds[i][0] - bufferAmount;
+            out[i][1] = bounds[i][1] + bufferAmount;
+        }
+        return out;
+    }
+    
+    public static Volume getVolume(ScalarField<DoubleMatrix> scalarFunc, double isoValue, double[][] iterBounds, double cubeWidth) {
         Map<NetCoord, SurfaceNetCube> coordCubeMap = getIntersectingCubes(scalarFunc, isoValue, iterBounds, cubeWidth);
-        
-        
-        
         Volume out = new Volume();
         for(NetCoord coord : coordCubeMap.keySet()) {
             for(EdgeLink edgeLink : CONNECTED_EDGES) {
@@ -44,10 +57,10 @@ public class NaiveSurfaceNet {
                 }
             }
         }
-        return new Object[] {out, coordCubeMap};
+        return out;
     }
     
-    private static Map<NetCoord, SurfaceNetCube> getIntersectingCubes(ScalarField<DoubleMatrix> scalarFunc, double isoValue, double[][] iterBounds, double cubeWidth) {
+    public static Map<NetCoord, SurfaceNetCube> getIntersectingCubes(ScalarField<DoubleMatrix> scalarFunc, double isoValue, double[][] iterBounds, double cubeWidth) {
         Map<NetCoord, SurfaceNetCube> out = new HashMap<NetCoord, SurfaceNetCube>();
         double[] nSteps = {(iterBounds[0][1]-iterBounds[0][0])/cubeWidth, 
             (iterBounds[1][1]-iterBounds[1][0])/cubeWidth,
@@ -56,8 +69,8 @@ public class NaiveSurfaceNet {
             for(int y = 0; y < nSteps[1]; y++) {
                 for(int z = 0; z < nSteps[2]; z++) {
                     NetCoord xyzCoord = new NetCoord(x, y, z);
-                    SurfaceNetCube xyzCube = new SurfaceNetCube(scalarFunc, new DoubleMatrix(new double[][]{{iterBounds[0][0]+x*cubeWidth,
-                    iterBounds[1][0]+y*cubeWidth, iterBounds[2][0]+z*cubeWidth}}), cubeWidth, isoValue);
+                    SurfaceNetCube xyzCube = new SurfaceNetCube(scalarFunc, new DoubleMatrix(new double[][]{{iterBounds[0][0]+(x)*cubeWidth,
+                    iterBounds[1][0]+(y)*cubeWidth, iterBounds[2][0]+(z)*cubeWidth}}), cubeWidth, isoValue);
                     if(xyzCube.intersectsSurface()) out.put(xyzCoord, xyzCube);
                 }
             }

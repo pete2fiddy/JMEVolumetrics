@@ -7,7 +7,7 @@ public class JblasCosAngleSquaredSimilarity implements SimilarityMetric<DoubleMa
     @Override
     public double similarityBetween(DoubleMatrix v1, DoubleMatrix v2) {
         double dot = v1.dot(v2);
-        return dot/(v1.norm2() * v2.norm2());
+        return dot*dot/(v1.norm2() * v2.norm2());
     }
     
 }

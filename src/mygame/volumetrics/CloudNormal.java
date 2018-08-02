@@ -4,7 +4,9 @@
 package mygame.volumetrics;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import mygame.data.search.KDTree;
 import mygame.graph.Graph;
 import mygame.graph.GraphEdge;
@@ -39,10 +41,13 @@ public class CloudNormal {
         int headId = 0;
         //paper talks about how to choose a good head id, but using an arbitrary value for now
         Graph riemannianMinSpanTree = GraphUtil.primsMinimumSpanningTree(riemannian, headId);
-        hoppeOrientNormalsWithRiemannianMinSpanTree(normals, riemannianMinSpanTree, headId);
+        setIndsToHoppeOrientNormalsWithRiemannianMinSpanTree(normals, riemannianMinSpanTree, headId, new HashSet<Integer>());
     }
     
-    private static void hoppeOrientNormalsWithRiemannianMinSpanTree(DoubleMatrix normals, Graph riemannianMinSpanTree, int currentNodeId) {
+    /*
+    orients the normals and fills a set of integers of the faces that were oriented
+    */
+    public static void setIndsToHoppeOrientNormalsWithRiemannianMinSpanTree(DoubleMatrix normals, Graph riemannianMinSpanTree, int currentNodeId, Set<Integer> toOrient) {
         
         //then traverse its children in any order (doesn't matter because orientation of children ONLY depends on this node's
         //normal and the child normal. This node's normal does not change while traversing other children)
@@ -53,8 +58,9 @@ public class CloudNormal {
             if(childDot < 0) {
                 //flip normal of child
                 normals.putRow(outEdge.CHILD_ID, normals.getRow(outEdge.CHILD_ID).mul(-1));
+                toOrient.add(outEdge.CHILD_ID);
             }
-            hoppeOrientNormalsWithRiemannianMinSpanTree(normals, riemannianMinSpanTree, outEdge.CHILD_ID);
+            setIndsToHoppeOrientNormalsWithRiemannianMinSpanTree(normals, riemannianMinSpanTree, outEdge.CHILD_ID, toOrient);
         }
     }
     

@@ -7,6 +7,12 @@ import java.util.Set;
 import mygame.data.search.KDTree;
 import mygame.graph.Graph;
 import mygame.graph.GraphEdge;
+import mygame.graph.SparseGraph;
+import mygame.graph.SymmetricGraph;
+import mygame.ml.similarity.SimilarityMetric;
+import mygame.ml.similarity.jblas.JblasCosAngleSquaredSimilarity;
+import mygame.ml.similarity.jblas.JblasRiemannianCost;
+import mygame.volumetrics.CloudNormal;
 import mygame.volumetrics.Facet;
 import mygame.volumetrics.IndexedVolume;
 import mygame.volumetrics.Volume;
@@ -18,11 +24,16 @@ public class VolumeUtil {
         
         DoubleMatrix allPoints = getPoints(v);
         KDTree allPointsTree = new KDTree(allPoints.toArray2());
-        
+        System.out.println("created all points tree");
         int[] uniquePointSubset = getUniquePoints(allPoints, allPointsTree, equalityRadius);
+        System.out.println("got unique points subset");
         DoubleMatrix uniquePoints = allPoints.getRows(uniquePointSubset);
+        System.out.println("created unique points");
         KDTree uniquePointsTree = new KDTree(uniquePoints.toArray2());
+        System.out.println("uniquePiontsTree created");
+        
         IndexedVolume out = new IndexedVolume(uniquePoints);
+        
         
         for(int facetNum = 0; facetNum < v.numFacets(); facetNum++) {
             Facet f = v.getFacet(facetNum);
@@ -80,6 +91,64 @@ public class VolumeUtil {
         return points;
     }
     
+    /*
+    not as practical and correct as using the cloud normals to orient the faces of the volume, but can work without the requirements
+    of anything other than an indexed volume. Applying hoppe point cloud normal orientation to this is a bit of a hack. It's likely 
+    doable in a correct setting, but I'm not sure how the Riemannian would need to be constructed using facets rather than points.
+    */
+    public static SymmetricGraph constructVolumeNormalRiemannian(IndexedVolume v) {
+        SimilarityMetric<DoubleMatrix> simMetric = new JblasRiemannianCost();
+        
+        SymmetricGraph out = new SymmetricGraph(new SparseGraph(v.numFacets()));
+        for(int id1 = 0; id1 < v.numFacets(); id1++) {
+            for(int id2 = 0; id2 < v.numFacets(); id2++) {
+                if(FacetUtil.indexedFacetsConnected(v.getFacetInds(id1), v.getFacetInds(id2))) {
+                    double sim = simMetric.similarityBetween(v.getFacet(id1).getNormalClone(), v.getFacet(id2).getNormalClone());
+                    out.link(id1, id2, sim);
+                }
+            }
+        }
+        return out;
+    }
+    
+    
+    public static void useCloudNormalsToOrientFaces(KDTree pointsKdTree, DoubleMatrix pointNormals, Volume v) {
+        for(int i = 0; i < v.numFacets(); i++) {
+            DoubleMatrix meanNormal = DoubleMatrix.zeros(3);
+            Facet f = v.getFacet(i);
+            for(int j = 0; j < f.numPoints(); j++) {
+                meanNormal = meanNormal.add(pointNormals.getRow(pointsKdTree.getNearestNeighborId(f.getPointClones(j).toArray())));
+            }
+            meanNormal = meanNormal.div((double)f.numPoints());
+            
+            
+            
+            if(MathUtil.cosAngleBetween(meanNormal, v.getFacet(i).getNormalClone()) < 0) {
+                //flip required
+                v.flipOrientation(i);
+            }
+        }
+    }
+    
+    public static void hoppeOrientFaces(IndexedVolume v) {
+        SymmetricGraph faceRiemannian = constructVolumeNormalRiemannian(v);
+        Graph minSpanRiemannian = GraphUtil.primsMinimumSpanningTree(faceRiemannian, 0);
+        DoubleMatrix normals = DoubleMatrix.zeros(v.numFacets(), 3);
+        for(int i = 0; i < normals.rows; i++) {
+            normals.putRow(i, v.getFacet(i).getNormalClone());
+        }
+        Set<Integer> toFlipFacetInds = new HashSet<Integer>();
+        CloudNormal.setIndsToHoppeOrientNormalsWithRiemannianMinSpanTree(normals, minSpanRiemannian, 0, toFlipFacetInds);
+        System.out.println("to flip facet inds: " + toFlipFacetInds);
+        for(int flipFacet : toFlipFacetInds) {
+            v.flipOrientation(flipFacet);
+        }
+        for(int i = 0; i < v.numFacets(); i++) {
+            v.flipOrientation(i);
+        }
+    }
+    
+    /*
     public static void orientFaces(IndexedVolume v) {
         //construct a graph of all neighboring facets
         //start from a random facet and deem it to be oriented correctly
@@ -90,31 +159,38 @@ public class VolumeUtil {
             facetInds[i] = v.getFacetInds(i);
         }
         Graph faceConnections = FacetUtil.getIndexedFacetConnectionGraph(facetInds);
-        Set<Integer> visited = new HashSet<Integer>();
-        while(visited.size() < v.numFacets()) {
+        Set<Integer> notVisited = new HashSet<Integer>();
+        for(int i = 0; i < v.numFacets(); i++) {
+            notVisited.add(i);
+        }
+        while(notVisited.size() > 0) {
            //since the graph traversal can only traverse a single connected component
-            orientFacesOfComponent(v, faceConnections, visited.iterator().next(), visited);
+           int startFace = notVisited.iterator().next();
+           notVisited.remove(startFace);
+            orientFacesOfComponent(v, faceConnections, startFace, notVisited);
         }
     }
     
-    private static void orientFacesOfComponent(IndexedVolume v, Graph faceConnectionGraph, int currFace, Set<Integer> visited) {
-        if(visited.size() >= v.numFacets()) return;
+    private static void orientFacesOfComponent(IndexedVolume v, Graph faceConnectionGraph, int currFace, Set<Integer> notVisited) {
+        if(notVisited.size() <= 0) return;
         
         int[] currFacetInds = v.getFacetInds(currFace);
         List<GraphEdge> currFaceOutEdges = faceConnectionGraph.getOutEdges(currFace);
         for(GraphEdge outEdge : currFaceOutEdges) {
-            visited.add(outEdge.CHILD_ID);//visiting now so that later traversals don't visit what is to be visited
+            notVisited.remove(outEdge.CHILD_ID);//visiting now so that later traversals don't visit what is to be visited
         }
         for(GraphEdge outEdge : currFaceOutEdges) {
-            if(!visited.contains(outEdge.CHILD_ID)) {
+            if(notVisited.contains(outEdge.CHILD_ID)) {
                 //orient outEdge.CHILD_ID if necessary
                 if(FacetUtil.neighboringFacetRequiresOrientationFlip(currFacetInds, 
                         v.getFacetInds(outEdge.CHILD_ID))){
                     v.flipOrientation(outEdge.CHILD_ID);
+                    System.out.println("face flipped");
                 }
                 //traverse on outEdge.CHILD_ID
-                orientFacesOfComponent(v, faceConnectionGraph, outEdge.CHILD_ID, visited);
+                orientFacesOfComponent(v, faceConnectionGraph, outEdge.CHILD_ID, notVisited);
             }
         }
     }
+    */
 }

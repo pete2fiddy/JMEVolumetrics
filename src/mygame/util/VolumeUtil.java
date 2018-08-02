@@ -24,13 +24,9 @@ public class VolumeUtil {
         
         DoubleMatrix allPoints = getPoints(v);
         KDTree allPointsTree = new KDTree(allPoints.toArray2());
-        System.out.println("created all points tree");
         int[] uniquePointSubset = getUniquePoints(allPoints, allPointsTree, equalityRadius);
-        System.out.println("got unique points subset");
         DoubleMatrix uniquePoints = allPoints.getRows(uniquePointSubset);
-        System.out.println("created unique points");
         KDTree uniquePointsTree = new KDTree(uniquePoints.toArray2());
-        System.out.println("uniquePiontsTree created");
         
         IndexedVolume out = new IndexedVolume(uniquePoints);
         

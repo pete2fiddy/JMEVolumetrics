@@ -57,16 +57,16 @@ public class MeshUtil {
     }
     
     public static LineCloud createLineCloudWireframe(AssetManager assetManager, Volume v) {
-        Vector3f[] volStarts = new Vector3f[v.numFacets()*3];
-        Vector3f[] volEnds = new Vector3f[v.numFacets()*3];
+        int numPoints = VolumeUtil.numPoints(v);
+        Vector3f[] volStarts = new Vector3f[numPoints];
+        Vector3f[] volEnds = new Vector3f[numPoints];
+        int pointNum = 0;
         for(int i = 0; i < v.numFacets(); i++) {
-            volStarts[i*3] = JblasJMEConverter.toVector3f(v.getFacet(i).getPointClones(0))[0];
-            volStarts[i*3 + 1] = JblasJMEConverter.toVector3f(v.getFacet(i).getPointClones(1))[0];
-            volStarts[i*3 + 2] = JblasJMEConverter.toVector3f(v.getFacet(i).getPointClones(2))[0];
-            
-            volEnds[i*3] = JblasJMEConverter.toVector3f(v.getFacet(i).getPointClones(1))[0];
-            volEnds[i*3 + 1] = JblasJMEConverter.toVector3f(v.getFacet(i).getPointClones(2))[0];
-            volEnds[i*3 + 2] = JblasJMEConverter.toVector3f(v.getFacet(i).getPointClones(0))[0];
+            Facet f = v.getFacet(i);
+            for(int j = 0; j < f.numPoints(); j++) {
+                volStarts[pointNum] = JblasJMEConverter.toVector3f(v.getFacet(i).getPointClones(j))[0];
+                volEnds[pointNum++] = JblasJMEConverter.toVector3f(v.getFacet(i).getPointClones((j+1)%f.numPoints()))[0];
+            }
         }
         return new LineCloud(assetManager, volStarts, volEnds);
     }

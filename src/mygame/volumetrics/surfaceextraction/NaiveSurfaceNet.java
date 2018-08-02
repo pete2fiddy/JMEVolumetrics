@@ -24,6 +24,11 @@ public class NaiveSurfaceNet {
     new EdgeLink(5,6),
     new EdgeLink(4,5)};
     
+    
+    private static final EdgeLink[] EDGES_TO_ITERATE = {new EdgeLink(0,1),
+        new EdgeLink(0,3),
+        new EdgeLink(0,4)
+    };
     /*
     returning Object[] array is for troubleshooting -- knowing stuff like the intersecting cubes is helpful.
     Won't be in final implementation
@@ -48,7 +53,11 @@ public class NaiveSurfaceNet {
         Map<NetCoord, SurfaceNetCube> coordCubeMap = getIntersectingCubes(scalarFunc, isoValue, iterBounds, cubeWidth);
         Volume out = new Volume();
         for(NetCoord coord : coordCubeMap.keySet()) {
-            for(EdgeLink edgeLink : CONNECTED_EDGES) {
+            //only iterates over a subset of possible edges, as prevents duplicate quads being added. 
+            //for example, if a cube has 3 neighbors that share its 0-1 edge,
+            //then each neighbor has a different edge (for example, 7-6 for a cube down and back from the original)
+            //that also connect to the original cube's 0-1 edge.
+            for(EdgeLink edgeLink : EDGES_TO_ITERATE) {
                 Facet[] quad = createQuadUsingSharedEdge(coordCubeMap, coord, edgeLink);
                 if(quad != null) {
                     for(Facet quadFacet : quad) {
@@ -153,7 +162,7 @@ public class NaiveSurfaceNet {
             if(connectedCubes[i] == null) return null;
             quadPoints.putRow(i, connectedCubes[i].cubeInterpPoint);
         }
-        return quadTriangleSplit(quadPoints);
+        return quadTriangleSplit(quadPoints);////new Facet[] {new Facet(quadPoints)};// 
     }
     
     //requires quadPoints be ordered in any way that allows you to connect the dots between adjacent points to form the quad

@@ -20,10 +20,11 @@ public class VolumeSolver {
         for(int i = 0; i < V.numFacets(); i++) {
             vol += getSignedSimplexVolumeFromOrigin(V.getFacet(i));
         }
-        return vol;
+        return Math.abs(vol);
     }
     
     private static double getSignedSimplexVolumeFromOrigin(Facet f) {
+        assert(f.numPoints() == 3);
         double signMetric = f.getNormalClone().dot(f.getPointClones(0));
         double signDirection = (signMetric > 0)? 1 : -1;
         return signDirection * getUnsignedSimplexVolumeFromOrigin(f);

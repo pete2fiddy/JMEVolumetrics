@@ -51,12 +51,8 @@ public class KDTreeBranchNode implements KDTreeNode {
     @Override
     public void fit(double[][] X, Set<Integer> remainingIds) {
         double[][] XRemaining = getXSubset(X, remainingIds);
-        System.out.println("X Remaining: " + Arrays.deepToString(XRemaining));
-        System.out.println("split axis: " + SPLIT_AXIS);
         this.splitValue = getSplitValue(XRemaining);
         Set<Integer>[] childSplits = childSplit(X, remainingIds);
-        System.out.println("child splits[0]: " + childSplits[0]);
-        System.out.println("child splits[1]: " + childSplits[1]);
         for(int i = 0; i < childSplits.length; i++) {
             if(childSplits[i].size() > 1) {
                 //is not a leaf

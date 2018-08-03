@@ -27,18 +27,17 @@ import mygame.util.MyBufferUtil;
 import mygame.util.PointUtil;
 
 
-public class PointCloud implements Updatable {
+public class PointCloud {
     private AssetManager assetManager;
     protected CloudPoint[] points;
     
-    protected Node cloudNode = new Node();
+    private Node cloudNode = new Node();
     private Material pointMat;
     private Mesh pointMesh;
     private Geometry cloudGeom;
     
-    private boolean doUpdatePoints = true, doUpdateSizes = true, doUpdateColors = true;
     
-    protected Camera cam;
+    
     
     
     /*
@@ -52,7 +51,7 @@ public class PointCloud implements Updatable {
     See thread for hints about how to further optimize, but currently it can pretty easily handle 
     ~3 million points
     */
-    public PointCloud(AssetManager assetManager, Camera cam, CloudPoint[] points) {
+    public PointCloud(AssetManager assetManager,CloudPoint[] points) {
         this.assetManager = assetManager;
         this.points = points;
         
@@ -63,14 +62,12 @@ public class PointCloud implements Updatable {
     }
     
     
-    public PointCloud(AssetManager assetManager, Camera cam, Vector3f[] points, 
-            ColorRGBA color, float size){
+    public PointCloud(AssetManager assetManager, Vector3f[] points, ColorRGBA color, float size){
         this.points = new CloudPoint[points.length];
         for(int i = 0; i < this.points.length; i++){
             this.points[i] = new CloudPoint(points[i], color, size);
         }
         this.assetManager = assetManager;
-        this.cam = cam;
         
         initPointMat();
         initPointMesh();
@@ -79,43 +76,19 @@ public class PointCloud implements Updatable {
     }
     
     
-    public void setPoint(int index, CloudPoint newPoint) {
-        if(!newPoint.COLOR.equals(this.points[index].COLOR)) doUpdateColors = true;
-        if(!newPoint.POINT.equals(this.points[index].POINT)) doUpdatePoints = true;
-        if(newPoint.SIZE != this.points[index].SIZE) doUpdateSizes = true;
-        this.points[index] = newPoint;
-    }
-    
     public CloudPoint getPoint(int index) {
         return points[index];
     }
     
-    @Override
-    public void update(float timePerFrame) {
-        if(doUpdatePoints) {
-            updatePointBuffer();
-            doUpdatePoints = false;
-        }
-        if(doUpdateColors) {
-            updateColorBuffer();
-            doUpdateColors = false;
-        }
-        if(doUpdateSizes) {
-            updateSizeBuffer();
-            doUpdateSizes = false;
-        }
-    }
-    
-    
-    protected void updatePointBuffer() {
+    protected void bufferPoints() {
         pointMesh.setBuffer(VertexBuffer.Type.Position, 3, MyBufferUtil.createPointsBuffer(CloudPoint.extractPoints(points)));
     }
     
-    private void updateColorBuffer() {
+    protected void bufferColors() {
         pointMesh.setBuffer(VertexBuffer.Type.Color, 4, MyBufferUtil.createColorBuffer(CloudPoint.extractColors(points)));
     }
     
-    private void updateSizeBuffer() {
+    protected void bufferSizes() {
         pointMesh.setBuffer(VertexBuffer.Type.Size, 1, MyBufferUtil.createFloatBuffer(CloudPoint.extractSizes(points)));
     }
     
@@ -136,9 +109,9 @@ public class PointCloud implements Updatable {
     private void initPointMesh() {
         pointMesh = new Mesh();
         pointMesh.setMode(Mode.Points);
-        updatePointBuffer();
-        updateColorBuffer();
-        updateSizeBuffer();
+        bufferPoints();
+        bufferColors();
+        bufferSizes();
         pointMesh.setStatic();
         pointMesh.updateBound();
     }

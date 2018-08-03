@@ -20,6 +20,10 @@ import org.jblas.DoubleMatrix;
 
 public class VolumeUtil {
     
+    /*
+    Process apperas to be pretty resilient and outputs a volume that closely resembles the input, EVEN if equality radius is too large.
+    Might be a good way to scale a model down for speed? (at least the process for removing redundant points might be)
+    */
     public static IndexedVolume convertToIndexedVolume(Volume v, double equalityRadius) {
         
         DoubleMatrix allPoints = getPoints(v);

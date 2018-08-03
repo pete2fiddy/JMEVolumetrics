@@ -10,7 +10,6 @@ public class Facet {
     private DoubleMatrix normal;
     
     public Facet(DoubleMatrix points) {
-        //assert(points.rows == 3);
         this.points = points;
         this.normal = getNormal();
     }

@@ -17,7 +17,7 @@ import mygame.graph.GraphEdge;
 import mygame.graph.SparseGraph;
 import mygame.graph.GraphNode;
 import mygame.input.VolumetricToolInput;
-import mygame.pointcloud.InteractivePointCloud;
+import mygame.pointcloud.InteractivePointCloudController;
 import org.jblas.DoubleMatrix;
 
 /*
@@ -26,8 +26,8 @@ allows the user to paint so long as the points to be painted are similar enough 
 public class SimilarityToSelectionPointPaintBrushCloudSegmenter extends SphericalPaintBrushPointCloudSegmenter {
     private double tolerance = .6;
     
-    public SimilarityToSelectionPointPaintBrushCloudSegmenter(InteractivePointCloud pointCloud, Vector3f[] X, KDTree kdTree, VolumetricToolInput toolInput) {
-        super(pointCloud, X, kdTree, toolInput);
+    public SimilarityToSelectionPointPaintBrushCloudSegmenter(InteractivePointCloudController pointCloudController, Vector3f[] X, KDTree kdTree, VolumetricToolInput toolInput) {
+        super(pointCloudController, X, kdTree, toolInput);
     }
     
     /*
@@ -37,7 +37,7 @@ public class SimilarityToSelectionPointPaintBrushCloudSegmenter extends Spherica
     @Override
     protected Set<Integer> getAllWithinRadius(Graph simGraph, int centerId, double radius) {
         Set<Integer> withinRadius = super.getAllWithinRadius(simGraph, centerId, radius);
-        int nearestSelectNeighborId = pointCloud.getNearestScreenNeighborId(toolInput.getSelectPos());
+        int nearestSelectNeighborId = pointCloudController.getNearestScreenNeighborId(toolInput.getSelectPos());
         if(nearestSelectNeighborId < 0) return new HashSet<Integer>();
         
         List<GraphEdge> centerEdges = simGraph.getOutEdges(nearestSelectNeighborId);

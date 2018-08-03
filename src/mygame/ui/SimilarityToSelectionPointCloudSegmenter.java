@@ -10,13 +10,13 @@ import mygame.graph.GraphEdge;
 import mygame.input.VolumetricToolInput;
 import mygame.ml.Segmenter;
 import mygame.ml.similarity.SimilarityMetric;
-import mygame.pointcloud.InteractivePointCloud;
+import mygame.pointcloud.InteractivePointCloudController;
 import mygame.util.SegmenterUtils;
 import org.jblas.DoubleMatrix;
 
 
 public class SimilarityToSelectionPointCloudSegmenter implements Segmenter {
-    private InteractivePointCloud pointCloud;
+    private InteractivePointCloudController pointCloudController;
     private VolumetricToolInput toolInput;
     private double similarityThresholdChangePerPixelWeight = 0.05;
     
@@ -26,8 +26,8 @@ public class SimilarityToSelectionPointCloudSegmenter implements Segmenter {
     //should scale the sensitivity by the amount of zoom (zoom out with same mouse delta should have more tolerance than
     //zoomed in with same mouse delta)
     //has no convenient way to deal with the different ranges/bounds of different similarity metrics when thresholding
-    public SimilarityToSelectionPointCloudSegmenter(InteractivePointCloud pointCloud, VolumetricToolInput toolInput) {
-        this.pointCloud = pointCloud;
+    public SimilarityToSelectionPointCloudSegmenter(InteractivePointCloudController pointCloudController, VolumetricToolInput toolInput) {
+        this.pointCloudController = pointCloudController;
         this.toolInput = toolInput;
     }
     
@@ -50,7 +50,7 @@ public class SimilarityToSelectionPointCloudSegmenter implements Segmenter {
         //4) let n be the id of the nearest cluster,assert(simGraph instanceof FullGraph) : "";
         
         if(toolInput.getIfDiscreteAction("SELECT_TOGGLE")) {
-            int nearestNeighborId = pointCloud.getNearestScreenNeighborId(toolInput.getSelectPos());
+            int nearestNeighborId = pointCloudController.getNearestScreenNeighborId(toolInput.getSelectPos());
             if(nearestNeighborId < 0) return segmentIds;
             
             segmentIds.removeAll(currentSelectionIds);

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package mygame.input;
 
 import com.jme3.input.InputManager;
@@ -74,6 +69,6 @@ public class VolumetricToolInput implements Updatable {
     
     @Override
     public void update(float timePerFrame) {
-        //nothing to doyet
+        //nothing to do yet
     }
 }

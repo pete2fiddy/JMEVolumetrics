@@ -13,9 +13,9 @@ import java.util.Set;
 import mygame.data.search.KDTree;
 import mygame.graph.Graph;
 import mygame.graph.SparseGraph;
-import mygame.pointcloud.InteractivePointCloud;
 import mygame.input.VolumetricToolInput;
 import mygame.ml.Segmenter;
+import mygame.pointcloud.InteractivePointCloudController;
 import mygame.util.JblasJMEConverter;
 import mygame.util.SegmenterUtils;
 import org.jblas.DoubleMatrix;
@@ -25,7 +25,7 @@ import org.jblas.DoubleMatrix;
  * @author Owner
  */
 public class SphericalPaintBrushPointCloudSegmenter implements Segmenter {
-    protected InteractivePointCloud pointCloud;
+    protected InteractivePointCloudController pointCloudController;
     protected VolumetricToolInput toolInput;
     protected Vector3f[] X;
     protected float brushRadius = 0.25f;
@@ -33,10 +33,10 @@ public class SphericalPaintBrushPointCloudSegmenter implements Segmenter {
     HashSet<Integer> segmentIds = new HashSet<Integer>();
     private KDTree kdTree;
     
-    public SphericalPaintBrushPointCloudSegmenter(InteractivePointCloud pointCloud, Vector3f[] X, KDTree kdTree, 
+    public SphericalPaintBrushPointCloudSegmenter(InteractivePointCloudController pointCloudController, Vector3f[] X, KDTree kdTree, 
             VolumetricToolInput toolInput) {
         this.X = X;
-        this.pointCloud = pointCloud;
+        this.pointCloudController = pointCloudController;
         this.toolInput = toolInput;
         this.kdTree = kdTree;
     }
@@ -45,7 +45,7 @@ public class SphericalPaintBrushPointCloudSegmenter implements Segmenter {
     @Override
     public Set<Integer> getSegmentedIds(Graph simGraph) {
         if(toolInput.getIfDiscreteAction("SELECT_TOGGLE")) {
-            int nearestNeighborId = pointCloud.getNearestScreenNeighborId(toolInput.getCursorPos());
+            int nearestNeighborId = pointCloudController.getNearestScreenNeighborId(toolInput.getCursorPos());
             if(nearestNeighborId >= 0) {
                 Set<Integer> withinRadius = getAllWithinRadius(simGraph, nearestNeighborId, brushRadius);
                 if (toolInput.getIfDiscreteAction("ERASE_TOGGLE")) {

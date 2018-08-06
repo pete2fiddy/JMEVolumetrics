@@ -10,10 +10,10 @@ import com.jme3.math.Vector3f;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import mygame.data.search.KDTree;
+import mygame.data.search.NearestNeighborSearcher;
 import mygame.graph.Graph;
 import mygame.graph.SparseGraph;
-import mygame.input.VolumetricToolInput;
+import mygame.input.KeyboardSegmenterToolController;
 import mygame.ml.Segmenter;
 import mygame.pointcloud.InteractivePointCloudController;
 import mygame.util.JblasJMEConverter;
@@ -26,15 +26,15 @@ import org.jblas.DoubleMatrix;
  */
 public class SphericalPaintBrushPointCloudSegmenter implements Segmenter {
     protected InteractivePointCloudController pointCloudController;
-    protected VolumetricToolInput toolInput;
+    protected SegmenterToolControllerInterface toolInput;
     protected Vector3f[] X;
     protected float brushRadius = 0.25f;
     Set<Integer>[] clusterSets;
     HashSet<Integer> segmentIds = new HashSet<Integer>();
-    private KDTree kdTree;
+    private NearestNeighborSearcher kdTree;
     
-    public SphericalPaintBrushPointCloudSegmenter(InteractivePointCloudController pointCloudController, Vector3f[] X, KDTree kdTree, 
-            VolumetricToolInput toolInput) {
+    public SphericalPaintBrushPointCloudSegmenter(InteractivePointCloudController pointCloudController, Vector3f[] X, NearestNeighborSearcher kdTree, 
+            SegmenterToolControllerInterface toolInput) {
         this.X = X;
         this.pointCloudController = pointCloudController;
         this.toolInput = toolInput;
@@ -44,18 +44,18 @@ public class SphericalPaintBrushPointCloudSegmenter implements Segmenter {
     
     @Override
     public Set<Integer> getSegmentedIds(Graph simGraph) {
-        if(toolInput.getIfDiscreteAction("SELECT_TOGGLE")) {
+        if(toolInput.selectActive()) {
             int nearestNeighborId = pointCloudController.getNearestScreenNeighborId(toolInput.getCursorPos());
             if(nearestNeighborId >= 0) {
                 Set<Integer> withinRadius = getAllWithinRadius(simGraph, nearestNeighborId, brushRadius);
-                if (toolInput.getIfDiscreteAction("ERASE_TOGGLE")) {
+                if (toolInput.eraseActive()) {
                     segmentIds.removeAll(withinRadius);
                 } else {
                     segmentIds.addAll(withinRadius);
                 }
             }
         }
-        if(toolInput.getIfDiscreteAction("CLEAR_TOGGLE")) {
+        if(toolInput.clearActive()) {
             segmentIds = new HashSet<Integer>();
         }
         return (Set<Integer>)segmentIds.clone();

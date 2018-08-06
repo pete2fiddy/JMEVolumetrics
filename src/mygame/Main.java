@@ -1,6 +1,6 @@
 package mygame;
 
-import mygame.input.VolumetricsCamera;
+import mygame.input.VolumetricSceneController;
 import com.jme3.app.SimpleApplication;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import mygame.data.search.KDTree;
+import mygame.data.search.NearestNeighborSearcher;
 import mygame.graph.Graph;
 import mygame.graph.SparseGraph;
 import mygame.ml.similarity.jme.JMEKMeansClusterer;
@@ -30,6 +31,7 @@ import mygame.pointcloud.InteractivePointCloudController;
 import mygame.pointcloud.LineCloud;
 import mygame.pointcloud.PointCloud;
 import mygame.pointcloud.PointCloudController;
+import mygame.input.InteractivePointCloudToolController;
 import mygame.util.GraphUtil;
 import mygame.util.ImageUtil;
 import mygame.util.JblasJMEConverter;
@@ -66,26 +68,29 @@ public class Main extends SimpleApplication {
     }
     
     
-    private VolumetricsCamera volCam;
+    private VolumetricSceneController volCam;
     private InteractivePointCloudController pointCloudController;
     
     
     /*
     
+    TODO: When switching segmentation types, sometimes segmented point list gets wiped. Not sure of a good way to fix --
+    have to somehow pass the actively selected points from the old segmenter to the new one
     
+    TODO: Find a better looking way to show a button as selected
+    
+    TODO: Finish implementing a clicky panel UI.
+    
+    TODO: Add buttons for erase toggle, etc for painting segmentation.
     
     TODO: need to enable depth buffering. With point clouds, points definitely in front can get painted behind.
     
-    TODO: better MVC if interactive point cloud isn't an EXTENSION of point cloud, but a class that holds both input methods
-    and interacts with a normal point cloud passed to it on instantiation (name it something like InteractivePointCloudController)
     
-    TODO: Rename my "camera" as a node, -- camera is a different thing and stays fixed, node moves around while camera stays fixed
     
     Organization":
     
     
     Change kmeans jme clusterer to use double matrix
-    
     
     Create simple connected/not connected graph type without values.
     
@@ -97,7 +102,13 @@ public class Main extends SimpleApplication {
     
     TODO: 
     
-    Create an interface for searching for points, and implement with KDTree. Allows for point search methods that aren't kdtree to be passed around instead. (general point search can be used instead of only KDTree)
+    Speed up graph recalculation when point moved in InteractivePointCloudController
+    
+    Move the final grpahs from interactive point cloud to the implemetnation of SegmenterToolController
+    
+    Rename KeyboardSegmenterToolController to PeripheralSegmenterToolController (works with mouse and keyboard -- peripherals)
+    
+    After refactoring KDTree references into a more general NearestNeighborSearcher, lots of variables kept a name that specifically references KDTree. Change them.
     
     Note: cam.distanceToNearPlane does NOT return the same thing as cam.getScreenCoordinates(vec).getZ()! 
     
@@ -117,16 +128,20 @@ public class Main extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         flyCam.setEnabled(false);
-        volCam = new VolumetricsCamera(inputManager);
+        volCam = new VolumetricSceneController(inputManager);
         volCam.attachCamera(rootNode);
-        test();
         
+        
+        test();
+        //figure out how to close the UI frame when main frame is closed
+        //make everything exit on escape
+        InteractivePointCloudToolController frame = new InteractivePointCloudToolController(pointCloudController, 200, 700);
     }
     
     
     
     private void test() {
-        Vector3f[] points = Test.generateCubeVec3f(10000, new Vector3f(0f, 0f, 0f), 2f);
+        Vector3f[] points = Test.generateCubesVec3f(25000, new Vector3f[] {new Vector3f(0f, 0f, 0f), new Vector3f(-3f, -4f, -3f)}, new float[] {2f, 1f});
         
         PointCloud pointCloud = new PointCloud(assetManager, points, new ColorRGBA(1f, 0f, 0f, 1f), 20f);
         
@@ -136,10 +151,10 @@ public class Main extends SimpleApplication {
         
         
         
-        KDTree pointsKDTree = new KDTree(JblasJMEConverter.toDoubleMatrix(points).toArray2());
+        NearestNeighborSearcher pointsKDTree = new KDTree(JblasJMEConverter.toDoubleMatrix(points).toArray2());
         
         
-        
+        /*
         
         DoubleMatrix normals = CloudNormal.getUnorientedPCANormals(JblasJMEConverter.toDoubleMatrix(points), 
                 pointsKDTree, 30);
@@ -181,14 +196,14 @@ public class Main extends SimpleApplication {
         volumeMat.setColor("Color", new ColorRGBA(1f,0f,1f, .5f));
         volumeGeom.setMaterial(volumeMat);
         volumeFrameGeom.setMaterial(volumeFrameMat);
-        pointCloud.getCloudNode().attachChild(volumeGeom);
-        pointCloud.getCloudNode().attachChild(volumeFrameGeom);
+        //pointCloud.getCloudNode().attachChild(volumeGeom);
+        //pointCloud.getCloudNode().attachChild(volumeFrameGeom);
         
         System.out.println("VOLUME not indexed: " + VolumeSolver.calcVolume(volume));
         System.out.println("VOLUME indexed: " + VolumeSolver.calcVolume(indexedVolume));
         System.out.println("non indexed num facets: " + volume.numFacets());
         System.out.println("indexed num facets: " + indexedVolume.numFacets());
-        
+        */
         
     }
     

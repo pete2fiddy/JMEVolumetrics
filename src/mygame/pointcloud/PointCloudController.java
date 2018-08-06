@@ -25,7 +25,7 @@ public class PointCloudController implements Updatable {
     @Override
     public void update(float timePerFrame) {
         if(doUpdatePoints) {
-            updatePointBuffer();
+            updatePoints();
         }
         if(doUpdateColors) {
             updateColors();
@@ -35,7 +35,7 @@ public class PointCloudController implements Updatable {
         }
     }
     
-    protected void updatePointBuffer() {
+    protected void updatePoints() {
         pointCloud.bufferPoints();
         doUpdatePoints = false;
     }

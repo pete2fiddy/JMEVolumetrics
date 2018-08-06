@@ -19,7 +19,7 @@ import mygame.ui.Updatable;
  *
  * @author Owner
  */
-public class VolumetricToolInput implements Updatable {
+public class KeyboardSegmenterToolController {
     private static final String[] DISCRETE_ACTION_NAMES = {"SELECT_TOGGLE", "CLEAR_TOGGLE", "ERASE_TOGGLE"};
     private static final Trigger[] DEFAULT_DISCRETE_ACTION_TRIGGERS = {new MouseButtonTrigger(MouseInput.BUTTON_LEFT),
         new KeyTrigger(KeyInput.KEY_C),
@@ -32,7 +32,7 @@ public class VolumetricToolInput implements Updatable {
     /*
     Should all rotating be down about the center of the screen as opposed to what I have now?
     */
-    public VolumetricToolInput(InputManager inputManager) {
+    public KeyboardSegmenterToolController(InputManager inputManager) {
         this.inputManager = inputManager;
         addMappings();
     }
@@ -67,8 +67,4 @@ public class VolumetricToolInput implements Updatable {
     public Vector2f getSelectPos() {return lastSelectPos;}
     public Vector2f getCursorPos() {return inputManager.getCursorPosition();}
     
-    @Override
-    public void update(float timePerFrame) {
-        //nothing to do yet
-    }
 }

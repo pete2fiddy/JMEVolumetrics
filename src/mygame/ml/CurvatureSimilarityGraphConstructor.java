@@ -4,7 +4,7 @@ import mygame.ml.similarity.SimilarityMetric;
 import com.jme3.math.Vector3f;
 import java.util.Map;
 import java.util.Set;
-import mygame.data.search.KDTree;
+import mygame.data.search.NearestNeighborSearcher;
 import mygame.graph.FullGraph;
 import mygame.graph.Graph;
 import mygame.graph.SparseGraph;
@@ -24,7 +24,7 @@ public class CurvatureSimilarityGraphConstructor {
     //twice otherwise
     
     
-    public static SymmetricGraph constructFullPCASimilarityGraph(DoubleMatrix X, DoubleMatrix normals, KDTree kdTree, 
+    public static SymmetricGraph constructFullPCASimilarityGraph(DoubleMatrix X, DoubleMatrix normals, NearestNeighborSearcher kdTree, 
             SimilarityMetric<DoubleMatrix> normalSimMetric) {
         
         SymmetricGraph out = new SymmetricGraph(new FullGraph(X.rows));
@@ -39,7 +39,7 @@ public class CurvatureSimilarityGraphConstructor {
     
     //constructs the similarity graph in a similar style to a Riemannian graph (http://hhoppe.com/recon.pdf), but the normal similarity metric is
     //up to the discretion of the caller
-    public static SymmetricGraph constructSparsePCASimilarityGraph(DoubleMatrix X, DoubleMatrix normals, KDTree kdTree,
+    public static SymmetricGraph constructSparsePCASimilarityGraph(DoubleMatrix X, DoubleMatrix normals, NearestNeighborSearcher kdTree,
             SimilarityMetric<DoubleMatrix> normalSimMetric, int nNodeChildren) {
         SymmetricGraph out = new SymmetricGraph(new SparseGraph(X.rows));
         for(int id1 = 0; id1 < normals.rows; id1++) {
@@ -52,7 +52,7 @@ public class CurvatureSimilarityGraphConstructor {
         return out;
     }
     
-    public static SymmetricGraph constructRiemannianPCASimilarityGraph(DoubleMatrix X, DoubleMatrix normals, KDTree kdTree,
+    public static SymmetricGraph constructRiemannianPCASimilarityGraph(DoubleMatrix X, DoubleMatrix normals, NearestNeighborSearcher kdTree,
             int nNodeChildren) {
         SimilarityMetric<DoubleMatrix> simMetric = new JblasRiemannianCost();
         SymmetricGraph out = new SymmetricGraph(new SparseGraph(X.rows));

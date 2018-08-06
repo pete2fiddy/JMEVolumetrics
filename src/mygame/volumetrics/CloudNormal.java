@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import mygame.data.search.KDTree;
+import mygame.data.search.NearestNeighborSearcher;
 import mygame.graph.Graph;
 import mygame.graph.GraphEdge;
 import mygame.graph.SparseGraph;
@@ -20,7 +20,7 @@ import org.jblas.DoubleMatrix;
 
 public class CloudNormal {
     
-    public static DoubleMatrix getUnorientedPCANormals(DoubleMatrix X, KDTree kdTree, int nNeighbors) {
+    public static DoubleMatrix getUnorientedPCANormals(DoubleMatrix X, NearestNeighborSearcher kdTree, int nNeighbors) {
         
         DoubleMatrix normals = DoubleMatrix.zeros(X.rows, X.columns);
         for(int i = 0; i < X.rows; i++) {
@@ -36,7 +36,7 @@ public class CloudNormal {
     
     If the minimum spanning tree process fails due to having more than 1 connected component, try making kNeibhorsRiemannian larger
     */
-    public static void hoppeOrientNormals(DoubleMatrix X, DoubleMatrix normals,  KDTree kdTree, int kNeighborsRiemannian) {
+    public static void hoppeOrientNormals(DoubleMatrix X, DoubleMatrix normals,  NearestNeighborSearcher kdTree, int kNeighborsRiemannian) {
         SymmetricGraph riemannian = CurvatureSimilarityGraphConstructor.constructRiemannianPCASimilarityGraph(X, normals, kdTree, kNeighborsRiemannian);
         int headId = 0;
         //paper talks about how to choose a good head id, but using an arbitrary value for now

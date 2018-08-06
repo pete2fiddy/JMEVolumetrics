@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import mygame.data.search.KDTree;
+import mygame.data.search.NearestNeighborSearcher;
 import mygame.graph.FullGraph;
 import mygame.graph.Graph;
 import mygame.graph.GraphEdge;
@@ -53,7 +53,7 @@ public class GraphUtil {
     }
     
     public static SymmetricGraph constructSparseSimilarityGraph(Vector3f[] X, SimilarityMetric<Vector3f> graphSimilarityMetric,
-            KDTree kdTree, int sparseNNeighbors) {
+            NearestNeighborSearcher kdTree, int sparseNNeighbors) {
         DoubleMatrix XMat = JblasJMEConverter.toDoubleMatrix(X);
         SymmetricGraph out = new SymmetricGraph(new SparseGraph(X.length));
         for(int i = 0; i < X.length; i++) {
@@ -67,7 +67,7 @@ public class GraphUtil {
     
     
     public static SymmetricGraph constructSparseSimilarityGraph(Vector3f[] X, SimilarityMetric<Vector3f> graphSimilarityMetric, 
-            KDTree kdTree, double maxRadius) {
+            NearestNeighborSearcher kdTree, double maxRadius) {
         DoubleMatrix XMat = JblasJMEConverter.toDoubleMatrix(X);
         SymmetricGraph out = new SymmetricGraph(new SparseGraph(X.length));
         for(int i = 0; i < X.length; i++) {
@@ -217,5 +217,18 @@ public class GraphUtil {
         return out;
     }
     
+    public static void unlinkAll(Graph g) {
+        for(int i = 0; i < g.numNodes(); i++) {
+            List<GraphEdge> children = g.getOutEdges(i);
+            for(GraphEdge outEdge : children) {
+                g.unlink(i, outEdge.CHILD_ID);
+            }
+        }
+    }
     
+    //erases all links in clone and clones source into it
+    public static void eraseAndCloneInto(Graph source, Graph clone) {
+        unlinkAll(clone);
+        cloneInto(source, clone);
+    }
 }

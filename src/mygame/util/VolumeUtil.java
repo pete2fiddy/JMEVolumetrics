@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import mygame.data.search.KDTree;
+import mygame.data.search.NearestNeighborSearcher;
 import mygame.graph.Graph;
 import mygame.graph.GraphEdge;
 import mygame.graph.SparseGraph;
@@ -27,10 +28,10 @@ public class VolumeUtil {
     public static IndexedVolume convertToIndexedVolume(Volume v, double equalityRadius) {
         
         DoubleMatrix allPoints = getPoints(v);
-        KDTree allPointsTree = new KDTree(allPoints.toArray2());
+        NearestNeighborSearcher allPointsTree = new KDTree(allPoints.toArray2());
         int[] uniquePointSubset = getUniquePoints(allPoints, allPointsTree, equalityRadius);
         DoubleMatrix uniquePoints = allPoints.getRows(uniquePointSubset);
-        KDTree uniquePointsTree = new KDTree(uniquePoints.toArray2());
+        NearestNeighborSearcher uniquePointsTree = new KDTree(uniquePoints.toArray2());
         
         IndexedVolume out = new IndexedVolume(uniquePoints);
         
@@ -46,7 +47,7 @@ public class VolumeUtil {
         return out;
     }
     
-    public static int[] getUniquePoints(DoubleMatrix allPoints, KDTree kdTree, double equalityRadius) {
+    public static int[] getUniquePoints(DoubleMatrix allPoints, NearestNeighborSearcher kdTree, double equalityRadius) {
         //for a given point, add to unique points if no points wihtin equalityRadius around it are contained
         //in uniquePoints
         Set<Integer> uniquePoints = new HashSet<Integer>();
@@ -112,12 +113,12 @@ public class VolumeUtil {
     }
     
     
-    public static void useCloudNormalsToOrientFaces(KDTree pointsKdTree, DoubleMatrix pointNormals, Volume v) {
+    public static void useCloudNormalsToOrientFaces(NearestNeighborSearcher pointsKdTree, DoubleMatrix pointNormals, Volume v) {
         for(int i = 0; i < v.numFacets(); i++) {
             DoubleMatrix meanNormal = DoubleMatrix.zeros(3);
             Facet f = v.getFacet(i);
             for(int j = 0; j < f.numPoints(); j++) {
-                meanNormal = meanNormal.add(pointNormals.getRow(pointsKdTree.getNearestNeighborId(f.getPointClones(j).toArray())));
+                meanNormal = meanNormal.add(pointNormals.getRow(pointsKdTree.getNearestNeighborIds(f.getPointClones(j).toArray(), 1)[0]));
             }
             meanNormal = meanNormal.div((double)f.numPoints());
             
@@ -147,50 +148,4 @@ public class VolumeUtil {
             v.flipOrientation(i);
         }
     }
-    
-    /*
-    public static void orientFaces(IndexedVolume v) {
-        //construct a graph of all neighboring facets
-        //start from a random facet and deem it to be oriented correctly
-        //DFS outward, flipping orientations when necessary (for a base face, a neighbor face must be flipped
-        //if an edge they share are in the same index order)
-        int[][] facetInds = new int[v.numFacets()][];
-        for(int i = 0; i < v.numFacets(); i++) {
-            facetInds[i] = v.getFacetInds(i);
-        }
-        Graph faceConnections = FacetUtil.getIndexedFacetConnectionGraph(facetInds);
-        Set<Integer> notVisited = new HashSet<Integer>();
-        for(int i = 0; i < v.numFacets(); i++) {
-            notVisited.add(i);
-        }
-        while(notVisited.size() > 0) {
-           //since the graph traversal can only traverse a single connected component
-           int startFace = notVisited.iterator().next();
-           notVisited.remove(startFace);
-            orientFacesOfComponent(v, faceConnections, startFace, notVisited);
-        }
-    }
-    
-    private static void orientFacesOfComponent(IndexedVolume v, Graph faceConnectionGraph, int currFace, Set<Integer> notVisited) {
-        if(notVisited.size() <= 0) return;
-        
-        int[] currFacetInds = v.getFacetInds(currFace);
-        List<GraphEdge> currFaceOutEdges = faceConnectionGraph.getOutEdges(currFace);
-        for(GraphEdge outEdge : currFaceOutEdges) {
-            notVisited.remove(outEdge.CHILD_ID);//visiting now so that later traversals don't visit what is to be visited
-        }
-        for(GraphEdge outEdge : currFaceOutEdges) {
-            if(notVisited.contains(outEdge.CHILD_ID)) {
-                //orient outEdge.CHILD_ID if necessary
-                if(FacetUtil.neighboringFacetRequiresOrientationFlip(currFacetInds, 
-                        v.getFacetInds(outEdge.CHILD_ID))){
-                    v.flipOrientation(outEdge.CHILD_ID);
-                    System.out.println("face flipped");
-                }
-                //traverse on outEdge.CHILD_ID
-                orientFacesOfComponent(v, faceConnectionGraph, outEdge.CHILD_ID, notVisited);
-            }
-        }
-    }
-    */
 }

@@ -10,7 +10,7 @@ import org.jblas.DoubleMatrix;
 Median picking may be slightly bugged, sometimes have splits of 5-0/2-0, etc. (would happen if all tie on the same axis
 , for example, so not impossible, but maybe I made a mistake)
 */
-public class KDTree {
+public class KDTree implements NearestNeighborSearcher {
     private final double[][] X;
     private KDTreeNode head;
     
@@ -43,10 +43,13 @@ public class KDTree {
         return out;
     }
     
+    /*
     public int getNearestNeighborId(double[] searchPoint) {
         return getNearestNeighborIds(searchPoint, 1)[0];
     }
+    */
     
+    @Override
     public int[] getNearestNeighborIds(double[] searchPoint, int k) {
         PriorityQueue<NeighborDistance> neighborDistQueue = new PriorityQueue(k, NeighborDistance.COMPARATOR);
         for(int i = 0; i < k; i++) {
@@ -59,6 +62,7 @@ public class KDTree {
         return neighbors;
     }
     
+    @Override
     public Set<Integer> getIdsWithinRadius(double[] centerPoint, double radius) {
         HashSet<Integer> withinRadius = new HashSet<Integer>();
         head.setNeighborsWithinRadius(X, centerPoint, radius, radius*radius, withinRadius);

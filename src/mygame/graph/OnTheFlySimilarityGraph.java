@@ -12,6 +12,10 @@ public class OnTheFlySimilarityGraph <DataType> implements Graph {
         this.X = X;
         this.simMetric = simMetric;
     }
+    
+    public void setData(DataType[] X) {
+        this.X = X;
+    }
 
     @Override
     public void link(int id1, int id2, double weight) {

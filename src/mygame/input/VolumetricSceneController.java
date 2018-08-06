@@ -26,7 +26,7 @@ import mygame.ui.Updatable;
 
 
 
-public class VolumetricsCamera implements Updatable {
+public class VolumetricSceneController implements Updatable {
     private static final String[] ANALOG_ACTION_NAMES = {"FORWARD", "BACKWARD", "LEFT", "RIGHT", 
     "UP", "DOWN", "ZOOM_IN", "ZOOM_OUT"};
     private static final Trigger[] DEFAULT_ANALOG_ACTION_TRIGGERS = {new KeyTrigger(KeyInput.KEY_W),
@@ -56,9 +56,8 @@ public class VolumetricsCamera implements Updatable {
     /*
     Should all rotating be down about the center of the screen as opposed to what I have now?
     */
-    public VolumetricsCamera(InputManager inputManager) {
+    public VolumetricSceneController(InputManager inputManager) {
         this.cameraNode = new VolumetricsCameraNode();
-        //this.cameraNode.setLocalTranslation(0f,0f,0f);
         this.inputManager = inputManager;
         initMouseState();
         addMappings();

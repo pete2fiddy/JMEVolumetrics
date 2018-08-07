@@ -1,6 +1,7 @@
 package mygame.pointcloud;
 
-import mygame.ui.Updatable;
+import com.jme3.math.Vector3f;
+import mygame.control.ui.Updatable;
 
 public class PointCloudController implements Updatable {
     
@@ -33,6 +34,19 @@ public class PointCloudController implements Updatable {
         if(doUpdateSizes) {
             updateSizes();
         }
+    }
+    
+    public PointCloud getCloud() {
+        return pointCloud;
+    }
+    
+    public Vector3f[] getPointClones() {
+        Vector3f[] points = CloudPoint.extractPoints(pointCloud.points);
+        Vector3f[] out = new Vector3f[points.length];
+        for(int i = 0; i < out.length; i++) {
+            out[i] = points[i].clone();
+        }
+        return out;
     }
     
     protected void updatePoints() {

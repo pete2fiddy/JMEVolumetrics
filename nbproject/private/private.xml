@@ -3,12 +3,14 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/input/SegmenterToolControllerImpl.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/ui/SphericalPaintBrushPointCloudSegmenter.java</file>
             <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/input/InteractivePointCloudToolController.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/input/SegmenterControllerImpl.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/pointcloud/PointCloudController.java</file>
             <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/input/KeyboardSegmenterToolController.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/ui/SegmenterController.java</file>
             <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/graph/Graph.java</file>
             <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/pointcloud/InteractivePointCloudController.java</file>
-            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/ui/SegmenterToolControllerInterface.java</file>
             <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/Main.java</file>
         </group>
     </open-files>

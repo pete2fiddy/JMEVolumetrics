@@ -1,5 +1,6 @@
 package mygame.data.search;
 
+import mygame.util.SelectUtil;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -87,10 +88,10 @@ public class KDTreeBranchNode implements KDTreeNode {
                 return 0;
             }
         };
-        double median = XRemaining[Select.quickSelect(XRemaining, c, (XRemaining.length/2)+1)][SPLIT_AXIS];
+        double median = XRemaining[SelectUtil.quickSelect(XRemaining, c, (XRemaining.length/2)+1)][SPLIT_AXIS];
         
         if(XRemaining.length%2 == 0) {
-            median += XRemaining[Select.quickSelect(XRemaining, c, XRemaining.length/2 - 1)][SPLIT_AXIS];
+            median += XRemaining[SelectUtil.quickSelect(XRemaining, c, XRemaining.length/2 - 1)][SPLIT_AXIS];
             median /= 2.0;
         }
         return median;

@@ -22,7 +22,7 @@ import com.jme3.scene.VertexBuffer;
 import com.jme3.scene.shape.Box;
 import com.jme3.util.BufferUtils;
 import java.nio.FloatBuffer;
-import mygame.ui.Updatable;
+import mygame.control.ui.Updatable;
 import mygame.util.MyBufferUtil;
 import mygame.util.PointUtil;
 

@@ -1,6 +1,6 @@
 package mygame;
 
-import mygame.input.VolumetricSceneController;
+import mygame.control.VolumetricSceneController;
 import com.jme3.app.SimpleApplication;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
@@ -31,7 +31,9 @@ import mygame.pointcloud.InteractivePointCloudController;
 import mygame.pointcloud.LineCloud;
 import mygame.pointcloud.PointCloud;
 import mygame.pointcloud.PointCloudController;
-import mygame.input.InteractivePointCloudToolController;
+import mygame.control.ui.SegmenterSelectFrame;
+import mygame.control.ui.SegmenterControllerImpl;
+import mygame.control.ui.SegmenterController;
 import mygame.util.GraphUtil;
 import mygame.util.ImageUtil;
 import mygame.util.JblasJMEConverter;
@@ -69,10 +71,12 @@ public class Main extends SimpleApplication {
     
     
     private VolumetricSceneController volCam;
-    private InteractivePointCloudController pointCloudController;
+    private SegmenterController cloudController;
     
     
     /*
+    
+    TODO: Remove dud classes
     
     TODO: When switching segmentation types, sometimes segmented point list gets wiped. Not sure of a good way to fix --
     have to somehow pass the actively selected points from the old segmenter to the new one
@@ -83,9 +87,16 @@ public class Main extends SimpleApplication {
     
     TODO: Add buttons for erase toggle, etc for painting segmentation.
     
+    TODO: Fix segmenters having their own selction pools when switching between them. Somehow pool their selection pool? (i.e. I might want to floodfill a face then paint another one,
+    but switching to paint clears the floodfill)
+    
     TODO: need to enable depth buffering. With point clouds, points definitely in front can get painted behind.
     
+    TODO: Change InteractivePointCloud's selectPoint to selectPoint(int... ids) (same with unselect points)
     
+    TODO: Better split the segmenters from their roles in the UI (i.e. create a segmenter, then a wrapper for the segmenter
+    that lets it "talk" with Segmenter Controller). (wrapper funnels info from the controller into the segmenter, on update ideal so that
+    segmenter never has to "know" about anything other than the sim graph and what is TOLD to it (rather than what it pulls))
     
     Organization":
     
@@ -135,7 +146,7 @@ public class Main extends SimpleApplication {
         test();
         //figure out how to close the UI frame when main frame is closed
         //make everything exit on escape
-        InteractivePointCloudToolController frame = new InteractivePointCloudToolController(pointCloudController, 200, 700);
+        //InteractivePointCloudToolController frame = new SegmenterSelectFrame(pointCloudController, 200, 700);
     }
     
     
@@ -145,7 +156,7 @@ public class Main extends SimpleApplication {
         
         PointCloud pointCloud = new PointCloud(assetManager, points, new ColorRGBA(1f, 0f, 0f, 1f), 20f);
         
-        this.pointCloudController = new InteractivePointCloudController(pointCloud, cam, inputManager);
+        this.cloudController = new SegmenterControllerImpl(inputManager, cam,  new InteractivePointCloudController(pointCloud));
         //pointCloudController.enableNNSearchThread(true);
         volCam.attachChildren(pointCloud.getCloudNode());
         
@@ -211,7 +222,7 @@ public class Main extends SimpleApplication {
     @Override
     public void simpleUpdate(float tpf) {
         volCam.update(tpf);
-        if(pointCloudController != null) pointCloudController.update(tpf);
+        if(cloudController != null) cloudController.update(tpf);
     }
     
     

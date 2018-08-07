@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import mygame.graph.Graph;
-import mygame.graph.SparseGraph;
-import mygame.volumetrics.Facet;
+import mygame.model.graph.Graph;
+import mygame.model.graph.SparseGraph;
+import mygame.model.volumetrics.Facet;
 import org.jblas.DoubleMatrix;
 
 

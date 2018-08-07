@@ -2,58 +2,16 @@ package mygame;
 
 import mygame.control.VolumetricSceneController;
 import com.jme3.app.SimpleApplication;
-import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
-import com.jme3.math.Matrix3f;
 import com.jme3.math.Vector3f;
-import com.jme3.scene.Geometry;
-import com.jme3.scene.Mesh;
-import com.jme3.scene.VertexBuffer.Type;
-import com.jme3.scene.shape.Box;
-import com.jme3.scene.shape.Line;
-import com.jme3.util.BufferUtils;
-import java.awt.Image;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import mygame.data.search.KDTree;
-import mygame.data.search.NearestNeighborSearcher;
-import mygame.graph.Graph;
-import mygame.graph.SparseGraph;
-import mygame.ml.similarity.jme.JMEKMeansClusterer;
-import mygame.ml.similarity.jme.JMERadialBasisSimilarity;
-import mygame.pointcloud.CloudPoint;
-import mygame.pointcloud.InteractivePointCloudController;
-import mygame.pointcloud.LineCloud;
-import mygame.pointcloud.PointCloud;
-import mygame.pointcloud.PointCloudController;
-import mygame.control.ui.SegmenterSelectFrame;
-import mygame.control.ui.SegmenterControllerImpl;
-import mygame.control.ui.SegmenterController;
-import mygame.util.GraphUtil;
-import mygame.util.ImageUtil;
+import mygame.model.data.search.KDTree;
+import mygame.model.data.search.NearestNeighborSearcher;
+import mygame.model.pointcloud.InteractivePointCloudManipulator;
+import mygame.view.pointcloud.PointCloud;
+import defunct.SegmenterControllerImpl;
+import defunct.SegmenterController;
+import mygame.control.ui.ToolboxInteractiveCloudManipulatorController;
 import mygame.util.JblasJMEConverter;
-import mygame.util.MeshUtil;
-import mygame.util.PointUtil;
-import mygame.util.VolumeUtil;
-import mygame.volumetrics.CloudNormal;
-import mygame.volumetrics.surfaceextraction.convexhull.ConvexHull;
-import mygame.volumetrics.Facet;
-import mygame.volumetrics.HoppeMeshMaker;
-import mygame.volumetrics.IndexedVolume;
-import mygame.volumetrics.SimpleStereoReconstruction;
-import mygame.volumetrics.surfaceextraction.NetCoord;
-import mygame.volumetrics.surfaceextraction.NaiveSurfaceNet;
-import mygame.volumetrics.surfaceextraction.SurfaceNetCube;
-import mygame.volumetrics.surfaceextraction.SurfaceNetCube;
-import mygame.volumetrics.Volume;
-import mygame.volumetrics.VolumeSolver;
-import org.jblas.DoubleMatrix;
-import org.lwjgl.opengl.GL11;
 
 /**
  * This is the Main Class of your Game. You should only do initialization here.
@@ -71,10 +29,31 @@ public class Main extends SimpleApplication {
     
     
     private VolumetricSceneController volCam;
-    private SegmenterController cloudController;
-    
+    //private SegmenterController cloudController;
+    private ToolboxInteractiveCloudManipulatorController cloudController;
     
     /*
+    
+    TODO: Create segmentation methods with minimal arguments (e.g. floodfill: give graph, start node, tolerance)
+    
+   
+    
+    
+    
+    
+    
+    TODO: Create a method invoker using the command pattern
+    
+    TODO: Create an abstract extension of the method invoker, with an abstract method that updates all fields the controller would have access to, and has
+    another abstract method to invoke the m
+    
+    TODO: Move graph algos from segmenters into graph utils, or perhaps dedicate classes to graph algos since graphutils is getting pretty big. Make segmenter's 
+    sole job to perform graph algorithm given the minimum necessary params (which are completely detached from any kind of UI at all, thatis the control's job to
+    tell the model what the params are)
+    
+    Control's job is to select the currnetly active segmenter and tell it what commands to use that are constructed using UI input (slider for tolerance, etc.)
+
+    TODO: Use reflection to hold a segmentation method along with its arguments, since number of arguments can vary.
     
     TODO: Remove dud classes
     
@@ -113,7 +92,7 @@ public class Main extends SimpleApplication {
     
     TODO: 
     
-    Speed up graph recalculation when point moved in InteractivePointCloudController
+    Speed up graph recalculation when point moved in InteractivePointCloudManipulator
     
     Move the final grpahs from interactive point cloud to the implemetnation of SegmenterToolController
     
@@ -156,7 +135,8 @@ public class Main extends SimpleApplication {
         
         PointCloud pointCloud = new PointCloud(assetManager, points, new ColorRGBA(1f, 0f, 0f, 1f), 20f);
         
-        this.cloudController = new SegmenterControllerImpl(inputManager, cam,  new InteractivePointCloudController(pointCloud));
+        //this.cloudController = new SegmenterControllerImpl(inputManager, cam,  new InteractivePointCloudManipulator(pointCloud));
+        this.cloudController = new ToolboxInteractiveCloudManipulatorController(inputManager, cam, new InteractivePointCloudManipulator(pointCloud));
         //pointCloudController.enableNNSearchThread(true);
         volCam.attachChildren(pointCloud.getCloudNode());
         

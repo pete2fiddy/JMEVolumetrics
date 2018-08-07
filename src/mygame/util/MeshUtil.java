@@ -5,10 +5,10 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Mesh;
 import com.jme3.scene.VertexBuffer;
 import com.jme3.util.BufferUtils;
-import mygame.pointcloud.LineCloud;
-import mygame.volumetrics.Facet;
-import mygame.volumetrics.IndexedVolume;
-import mygame.volumetrics.Volume;
+import mygame.view.pointcloud.LineCloud;
+import mygame.model.volumetrics.Facet;
+import mygame.model.volumetrics.IndexedVolume;
+import mygame.model.volumetrics.Volume;
 
 public class MeshUtil {
     /*

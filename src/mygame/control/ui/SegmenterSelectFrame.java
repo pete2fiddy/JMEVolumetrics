@@ -5,16 +5,10 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.UIManager;
-import mygame.pointcloud.InteractivePointCloudController;
-import mygame.control.ui.SelectionDisabledSegmenter;
-import mygame.control.ui.Updatable;
-import defunct.ui.action.UIControlAction;
 
 public class SegmenterSelectFrame implements ActionListener {
 
@@ -77,8 +71,6 @@ public class SegmenterSelectFrame implements ActionListener {
             unselectButton(activeSegmenterTypeButton);
             selectButton(sourceButton);
         }
-        if(activeSegmenterTypeButton!=null) System.out.println("active segmenter type: " + activeSegmenterTypeButton.TYPE);
-        if(activeSegmenterTypeButton == null) System.out.println("active segmenter type: null");
         for(ActionListener al : listeners) {
             al.actionPerformed(ae);
         }

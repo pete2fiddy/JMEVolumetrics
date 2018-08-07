@@ -7,14 +7,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import mygame.data.search.NearestNeighborSearcher;
-import mygame.graph.FullGraph;
-import mygame.graph.Graph;
-import mygame.graph.GraphEdge;
-import mygame.graph.SparseGraph;
-import mygame.graph.GraphNode;
-import mygame.graph.SymmetricGraph;
-import mygame.ml.similarity.SimilarityMetric;
+import mygame.model.data.search.NearestNeighborSearcher;
+import mygame.model.graph.FullGraph;
+import mygame.model.graph.Graph;
+import mygame.model.graph.GraphEdge;
+import mygame.model.graph.SparseGraph;
+import mygame.model.graph.GraphNode;
+import mygame.model.graph.SymmetricGraph;
+import mygame.model.data.ml.similarity.SimilarityMetric;
 import org.jblas.DoubleMatrix;
 
 

@@ -1,5 +1,6 @@
 package mygame.control.ui;
 
+import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -17,7 +18,14 @@ public class LabeledSliderPanel extends JPanel {
     
     public LabeledSliderPanel(int minSlider, int maxSlider) {
         this.slider = new JSlider(minSlider, maxSlider); 
-       add(label);
+        add(label);
         add(slider);
+    }
+    
+    public static void setToDefaultLayout(LabeledSliderPanel p) {
+        p.setLayout(new BoxLayout(p, BoxLayout.X_AXIS));
+        p.slider.setFocusable(false);
+        p.slider.setPaintTicks(true);
+        p.slider.setMajorTickSpacing((p.slider.getMaximum() - p.slider.getMinimum())/10);
     }
 }

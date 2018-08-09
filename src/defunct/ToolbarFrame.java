@@ -1,4 +1,4 @@
-package mygame.control.ui;
+package defunct;
 
 import defunct.Segmenter;
 import java.awt.event.ActionEvent;

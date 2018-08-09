@@ -8,10 +8,8 @@ import mygame.model.data.search.KDTree;
 import mygame.model.data.search.NearestNeighborSearcher;
 import mygame.model.pointcloud.InteractivePointCloudManipulator;
 import mygame.view.pointcloud.PointCloud;
-import defunct.SegmenterControllerImpl;
-import defunct.SegmenterController;
 import javax.swing.UIManager;
-import mygame.control.ui.default_toolbox_cloud_manipulator.ToolboxInteractiveCloudManipulatorController;
+import mygame.control.ui.controller.Controller;
 import mygame.util.JblasJMEConverter;
 
 /**
@@ -30,7 +28,7 @@ public class Main extends SimpleApplication {
     
     
     private VolumetricSceneController volCam;
-    private ToolboxInteractiveCloudManipulatorController cloudController;
+    private Controller cloudController;
     
     /*
     TODO: Add button for setting active mesh to a mesh of selected subset to ToolboxInteractiveCloudManipulatorController (custom listener to differentiate from the other toolbox button actionPerforms)
@@ -153,9 +151,9 @@ public class Main extends SimpleApplication {
         
         PointCloud pointCloud = new PointCloud(assetManager, points, new ColorRGBA(1f, 0f, 0f, 1f), 20f);
         
-        //this.cloudController = new SegmenterControllerImpl(inputManager, cam,  new InteractivePointCloudManipulator(pointCloud));
-        this.cloudController = new ToolboxInteractiveCloudManipulatorController(inputManager, cam, new InteractivePointCloudManipulator(pointCloud));
-        //pointCloudController.enableNNSearchThread(true);
+        
+        this.cloudController = new Controller(inputManager, cam, new InteractivePointCloudManipulator(pointCloud));
+        
         volCam.attachChildren(pointCloud.getCloudNode());
         
         

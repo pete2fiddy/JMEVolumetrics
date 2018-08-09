@@ -1,4 +1,4 @@
-package mygame.control.ui;
+package defunct;
 
 import com.jme3.input.InputManager;
 import com.jme3.input.KeyInput;
@@ -12,6 +12,7 @@ import com.jme3.math.Vector3f;
 import com.jme3.renderer.Camera;
 import java.util.HashSet;
 import java.util.Set;
+import mygame.control.ui.PeripheralInputTokenizer;
 import mygame.control.ui.PeripheralInputTokenizer.ActionActiveState.ActivationType;
 import mygame.model.data.search.KDTree;
 import mygame.model.data.search.NearestNeighborSearcher;

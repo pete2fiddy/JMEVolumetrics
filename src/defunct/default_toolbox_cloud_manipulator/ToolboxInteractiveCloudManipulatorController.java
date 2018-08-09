@@ -1,4 +1,4 @@
-package mygame.control.ui.default_toolbox_cloud_manipulator;
+package defunct.default_toolbox_cloud_manipulator;
 
 import com.jme3.input.InputManager;
 import com.jme3.math.Vector3f;
@@ -18,10 +18,11 @@ import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import mygame.control.ui.LabeledSliderPanel;
-import mygame.control.ui.SegmentPeripheralInputControllerVisitor;
+import defunct.SegmentPeripheralInputControllerVisitor;
 import mygame.control.ui.SimpleToolbarFrame;
-import mygame.control.ui.ToolbarFrame;
 import mygame.control.ui.Updatable;
+import defunct.default_toolbox_cloud_manipulator.ToolboxInteractiveCloudManipulatorController.GraphType;
+import defunct.default_toolbox_cloud_manipulator.ToolboxInteractiveCloudManipulatorController.SegmenterType;
 import mygame.model.data.ml.similarity.jme.JMECosAngleSquaredSimilarity;
 import mygame.model.data.ml.similarity.jme.JMERadialBasisSimilarity;
 import mygame.model.data.search.KDTree;
@@ -39,27 +40,15 @@ import mygame.util.JblasJMEConverter;
 import org.jblas.DoubleMatrix;
 
 //might want to move the scene mover into here too
-public class ToolboxInteractiveCloudManipulatorController implements Updatable, ActionListener, ChangeListener {
+public class ToolboxInteractiveCloudManipulatorController extends SimpleToolbarFrame<SegmenterType, GraphType> implements Updatable, ActionListener, ChangeListener {
 
     private static final int[] SEGMENT_SETTING_SLIDER_TICK_RANGE = {0, 100};
     private static final String RADIUS_SLIDER_LABEL_TEXT = "Radius: ";
     private static final String TOLERANCE_SLIDER_LABEL_TEXT = "Tolerance: ";
-    private static final Set<SegmenterType> RADIUS_ADJUSTABLE_SEGMENTERS;
-    private static final Set<SegmenterType> TOLERANCE_ADJUSTABLE_SEGMENTERS;
-
-    static {
-        RADIUS_ADJUSTABLE_SEGMENTERS = new HashSet<SegmenterType>();
-        RADIUS_ADJUSTABLE_SEGMENTERS.add(SegmenterType.PAINTBRUSH);
-        RADIUS_ADJUSTABLE_SEGMENTERS.add(SegmenterType.CONSTRAINED_PAINTBRUSH);
-        
-        TOLERANCE_ADJUSTABLE_SEGMENTERS = new HashSet<SegmenterType>();
-        TOLERANCE_ADJUSTABLE_SEGMENTERS.add(SegmenterType.FLOODFILL);
-        TOLERANCE_ADJUSTABLE_SEGMENTERS.add(SegmenterType.CONSTRAINED_PAINTBRUSH);
-    }
+    
 
     private SegmentPeripheralInputControllerVisitor segmentController;
     private InteractivePointCloudManipulator cloudManipulator;
-    private ToolbarFrame<SegmenterType, GraphType> toolbarFrame;
 
     private JPanel segmentationSettingSliderPanel = new JPanel();
     
@@ -72,6 +61,11 @@ public class ToolboxInteractiveCloudManipulatorController implements Updatable, 
     //add a JFRame extension that contains segmentation types, graph types, and slider/s that this class can talk with
     //create a wrapper for a jcomponent that can be added to the jframe extension
     public ToolboxInteractiveCloudManipulatorController(InputManager inputManager, Camera cam, InteractivePointCloudManipulator cloudManipulator) {
+        super("Toolbox", SegmenterType.class, GraphType.class);
+        
+        this.setResizable(false);
+        
+        
         Vector3f[] points = cloudManipulator.getPointClones();
         NearestNeighborSearcher neighborSearcher = new KDTree(JblasJMEConverter.toArr(points));
         //purposefully do not orient normals. Would be a better idea to do that after selection, using the subset of the normals of the selection
@@ -90,16 +84,14 @@ public class ToolboxInteractiveCloudManipulatorController implements Updatable, 
         tokenToGraph.put(GraphType.SPARSE_ANGLE, GraphUtil.constructSparseSimilarityGraph(JblasJMEConverter.toVector3f(normals), new JMECosAngleSquaredSimilarity(), neighborSearcher, 6));
         tokenToGraph.put(GraphType.ON_THE_FLY_ANGLE, new OnTheFlySimilarityGraph(JblasJMEConverter.toVector3f(normals), new JMECosAngleSquaredSimilarity()));
 
-        this.toolbarFrame = new SimpleToolbarFrame<SegmenterType, GraphType>("Toolbox", SegmenterType.class, GraphType.class);
-        this.toolbarFrame.setResizable(false);
-        this.toolbarFrame.addListener(this);
+        
 
         addToolbarAddons();
     }
 
     private void addToolbarAddons() {
         segmentationSettingSliderPanel.setLayout(new GridLayout(0, 1));
-        toolbarFrame.add(segmentationSettingSliderPanel);
+        add(segmentationSettingSliderPanel);
         
         configureSliderPanel(radiusSliderPanel);
         configureSliderPanel(toleranceSliderPanel);
@@ -107,7 +99,7 @@ public class ToolboxInteractiveCloudManipulatorController implements Updatable, 
         segmentationSettingSliderPanel.add(radiusSliderPanel);
         segmentationSettingSliderPanel.add(toleranceSliderPanel);
 
-        toolbarFrame.pack();
+        pack();
     }
 
     private void configureSliderPanel(LabeledSliderPanel p) {
@@ -121,15 +113,15 @@ public class ToolboxInteractiveCloudManipulatorController implements Updatable, 
     @Override
     public void update(float timePerFrame) {
         segmentController.updateProjectionTransform(cloudManipulator.getCloud().getCloudNode().getWorldTransform().toTransformMatrix());
-        Segmenter activeSegmenter = tokenToSegmenter.get(toolbarFrame.getActiveSegmenter());//segmenters.get(toolbarFrame.getActiveSegmenter());
+        Segmenter activeSegmenter = tokenToSegmenter.get(getActiveSegmenter());
         if (activeSegmenter != null) {
             cloudManipulator.selectPoints(segmentController.segment(activeSegmenter));
-            if(RADIUS_ADJUSTABLE_SEGMENTERS.contains(toolbarFrame.getActiveSegmenter())) {
+            if(RADIUS_ADJUSTABLE_SEGMENTERS.contains(getActiveSegmenter())) {
                 radiusSliderPanel.setVisible(true);
             } else {
                 radiusSliderPanel.setVisible(false);
             }
-            if(TOLERANCE_ADJUSTABLE_SEGMENTERS.contains(toolbarFrame.getActiveSegmenter())) {
+            if(TOLERANCE_ADJUSTABLE_SEGMENTERS.contains(getActiveSegmenter())) {
                 toleranceSliderPanel.setVisible(true);
             } else {
                 toleranceSliderPanel.setVisible(false);
@@ -138,20 +130,20 @@ public class ToolboxInteractiveCloudManipulatorController implements Updatable, 
             radiusSliderPanel.setVisible(false);
             toleranceSliderPanel.setVisible(false);
         }
-        toolbarFrame.setSize(toolbarFrame.getPreferredSize());
+        setSize(getPreferredSize());
         cloudManipulator.update(timePerFrame);
     }
 
     @Override
     public void actionPerformed(ActionEvent ae) {
-        segmentController.setGraph(tokenToGraph.get(toolbarFrame.getActiveGraph()));
+        segmentController.setGraph(tokenToGraph.get(getActiveGraph()));
 
         
-        if (TOLERANCE_ADJUSTABLE_SEGMENTERS.contains(toolbarFrame.getActiveSegmenter())) {
+        if (TOLERANCE_ADJUSTABLE_SEGMENTERS.contains(getActiveSegmenter())) {
             double sliderInterpVal = interpSliderVal(toleranceSliderPanel.slider.getValue());
             toleranceSliderPanel.label.setText(TOLERANCE_SLIDER_LABEL_TEXT + Double.toString(sliderInterpVal));
             segmentController.setSegmentTolerance(sliderInterpVal);
-        } else if (RADIUS_ADJUSTABLE_SEGMENTERS.contains(toolbarFrame.getActiveSegmenter())) {
+        } else if (RADIUS_ADJUSTABLE_SEGMENTERS.contains(getActiveSegmenter())) {
             double sliderInterpVal = interpSliderVal(radiusSliderPanel.slider.getValue());
             radiusSliderPanel.label.setText(RADIUS_SLIDER_LABEL_TEXT + Double.toString(sliderInterpVal));
             segmentController.setSegmentRadius(sliderInterpVal);
@@ -162,12 +154,12 @@ public class ToolboxInteractiveCloudManipulatorController implements Updatable, 
     public void stateChanged(ChangeEvent ce) {
         //slider logic here
        
-        if (RADIUS_ADJUSTABLE_SEGMENTERS.contains(toolbarFrame.getActiveSegmenter())) {
+        if (RADIUS_ADJUSTABLE_SEGMENTERS.contains(getActiveSegmenter())) {
             double sliderInterpVal = interpSliderVal(radiusSliderPanel.slider.getValue());
             segmentController.setSegmentRadius(sliderInterpVal);
             radiusSliderPanel.label.setText(RADIUS_SLIDER_LABEL_TEXT + Double.toString(sliderInterpVal));
         }
-        if (TOLERANCE_ADJUSTABLE_SEGMENTERS.contains(toolbarFrame.getActiveSegmenter())) {
+        if (TOLERANCE_ADJUSTABLE_SEGMENTERS.contains(getActiveSegmenter())) {
             double sliderInterpVal = interpSliderVal(toleranceSliderPanel.slider.getValue());
             segmentController.setSegmentTolerance(sliderInterpVal);
             toleranceSliderPanel.label.setText(TOLERANCE_SLIDER_LABEL_TEXT + Double.toString(sliderInterpVal));
@@ -180,7 +172,7 @@ public class ToolboxInteractiveCloudManipulatorController implements Updatable, 
     }
 
 
-    private enum GraphType {
+    protected static enum GraphType {
         ON_THE_FLY_ANGLE("On the fly angle"), SPARSE_DISTANCE("Sparse distance"), SPARSE_ANGLE("Sparse angle");
 
         private final String BUTTON_TEXT;
@@ -195,7 +187,7 @@ public class ToolboxInteractiveCloudManipulatorController implements Updatable, 
         }
     }
 
-    private enum SegmenterType {
+    protected static enum SegmenterType {
         PAINTBRUSH("Paintbrush"), FLOODFILL("Floodfill"), CONSTRAINED_PAINTBRUSH("Constrained paintbrush");
         private final String BUTTON_TEXT;
 

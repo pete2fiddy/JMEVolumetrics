@@ -1,4 +1,4 @@
-package mygame.control.ui;
+package defunct;
 
 import java.util.Set;
 

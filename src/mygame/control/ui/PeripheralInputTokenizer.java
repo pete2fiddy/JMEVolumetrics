@@ -14,7 +14,7 @@ on release, etc.). Cannot handle all types of interactions that may be wanted, s
 all functionality the class requires is simple enough that PeripheralInputTokenizer can handle it. Otherwise,
 program custom logic in a new class or within class.
 */
-public class PeripheralInputTokenizer {
+public class PeripheralInputTokenizer <ActionType extends Enum> {
     
     private InputManager inputManager;
     private Map<String, ActionActiveState> actionNameStateMap = new HashMap<String, ActionActiveState>();
@@ -23,10 +23,10 @@ public class PeripheralInputTokenizer {
         this.inputManager = inputManager;
     }
     
-    public void addMapping(String actionName, Trigger whenFired, ActivationType whenActive) {
-        inputManager.addMapping(actionName, whenFired);
-        actionNameStateMap.put(actionName, new ActionActiveState(actionName, whenActive));
-        inputManager.addListener(actionStateListener, actionName);
+    public void addMapping(ActionType actionName, Trigger whenFired, ActivationType whenActive) {
+        inputManager.addMapping(actionName.toString(), whenFired);
+        actionNameStateMap.put(actionName.toString(), new ActionActiveState(actionName.toString(), whenActive));
+        inputManager.addListener(actionStateListener, actionName.toString());
     }
     
     private final ActionListener actionStateListener = new ActionListener() {
@@ -39,8 +39,8 @@ public class PeripheralInputTokenizer {
         } 
     };
 
-    public boolean actionActive(String actionName) {
-        return actionNameStateMap.get(actionName).isActive();
+    public boolean actionActive(ActionType actionName) {
+        return actionNameStateMap.get(actionName.toString()).isActive();
     }
     
     public static class ActionActiveState {

@@ -10,7 +10,7 @@ import com.jme3.math.Vector2f;
 import mygame.control.ui.PeripheralInputTokenizer;
 import mygame.control.ui.Updatable;
 
-public class ControllerInput <GraphType extends Enum, SegmenterType extends Enum> extends ControllerToolboxFrame<GraphType, SegmenterType> implements Updatable {
+public class UIController <GraphType extends Enum, SegmenterType extends Enum> extends ControllerToolboxFrame<GraphType, SegmenterType> implements Updatable {
     
     private static final Trigger DEFAULT_SELECT_TRIGGER = new MouseButtonTrigger(MouseInput.BUTTON_LEFT),
             DEFAULT_CLEAR_TRIGGER = new KeyTrigger(KeyInput.KEY_C),
@@ -22,7 +22,7 @@ public class ControllerInput <GraphType extends Enum, SegmenterType extends Enum
     private Vector2f selectPos;
     private InputManager inputManager;
     
-    public ControllerInput(InputManager inputManager, Class<GraphType> graphTypeClass, Class<SegmenterType> segmenterTypeClass) {
+    public UIController(InputManager inputManager, Class<GraphType> graphTypeClass, Class<SegmenterType> segmenterTypeClass) {
         super("Toolbox", graphTypeClass, segmenterTypeClass);
         this.inputManager = inputManager;
         initInputTokenizer();

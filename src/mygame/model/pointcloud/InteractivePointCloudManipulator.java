@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
-import defunct.SegmenterController;
 import mygame.view.pointcloud.CloudPoint;
 import mygame.view.pointcloud.PointCloud;
 
@@ -17,7 +16,6 @@ public class InteractivePointCloudManipulator extends PointCloudManipulator {
     
     
     private static final float POINT_SELECT_SIZE_MULTIPLIER = 3f;
-    private SegmenterController toolInput;
     private Map<Integer, CloudPoint> selectedPoints = new HashMap<Integer, CloudPoint>();
     
     public InteractivePointCloudManipulator(PointCloud pointCloud) {

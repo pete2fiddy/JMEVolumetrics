@@ -31,7 +31,6 @@ public class SelectionSimilarityConstrainedPaintbrushSegmenter implements Segmen
         Set<Integer> out = new HashSet<Integer>();
         for(int id : idsInRadius) {
             Double idWeight = outSeedWeights.get(id);
-            System.out.println("id weight: " + idWeight + ", tolerance: " + tolerance);
             if(idWeight != null && idWeight > tolerance) {
                 out.add(id);
             }

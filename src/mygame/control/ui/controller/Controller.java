@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import mygame.control.ui.Updatable;
-import defunct.default_toolbox_cloud_manipulator.ToolboxInteractiveCloudManipulatorController;
 import mygame.model.data.ml.similarity.jme.JMECosAngleSquaredSimilarity;
 import mygame.model.data.ml.similarity.jme.JMERadialBasisSimilarity;
 import mygame.model.data.search.KDTree;
@@ -31,7 +30,7 @@ import org.jblas.DoubleMatrix;
 
 
 public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
-    private ControllerInput<GraphType, SegmenterType> input;
+    private UIController<GraphType, SegmenterType> input;
     private InteractivePointCloudManipulator model;
     private NearestNeighborSearcher neighborSearcher;
     private PointSelectBFSNearestNeighborSearch screenNeighborSearcher;
@@ -44,8 +43,7 @@ public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
         Vector3f[] pointsVec = model.getPointClones();
         this.points = JblasJMEConverter.toArr(pointsVec);
         this.model = model;
-        this.input = new ControllerInput<GraphType, SegmenterType>(inputManager, GraphType.class, SegmenterType.class);
-        
+        this.input = new UIController<GraphType, SegmenterType>(inputManager, GraphType.class, SegmenterType.class);
         this.neighborSearcher = new KDTree(JblasJMEConverter.toArr(pointsVec));
         fillMaps(pointsVec, CloudNormal.getUnorientedPCANormals(JblasJMEConverter.toDoubleMatrix(pointsVec), neighborSearcher, 30));
         initScreenNeighborSearcher(cam, pointsVec);
@@ -106,7 +104,7 @@ public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
     }
     
     private int getNearestScreenNeighbor() {
-        if(!input.actionActive(ControllerInput.ActionType.SELECT_ACTION)) return -1;
+        if(!input.actionActive(UIController.ActionType.SELECT_ACTION)) return -1;
         Vector2f selectPos = input.getSelectPos();
         if(selectPos == null) return -1;
         return screenNeighborSearcher.getNearestNeighborId(new Vector3f(selectPos.x, selectPos.y, 0), 10);
@@ -116,15 +114,15 @@ public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
     public void update(float timePerFrame) {
         screenNeighborSearcher.setTransform(model.getCloud().getCloudNode().getWorldTransform().toTransformMatrix());
         if(input.getActiveSegmenter() != null) {
-            if(input.actionActive(ControllerInput.ActionType.SELECT_ACTION)) {
-                if(!input.actionActive(ControllerInput.ActionType.ERASE_ACTION)) {
+            if(input.actionActive(UIController.ActionType.SELECT_ACTION)) {
+                if(!input.actionActive(UIController.ActionType.ERASE_ACTION)) {
                     selectedPoints.addAll(segment(segmenterMap.get(input.getActiveSegmenter())));
                 } else {
                     selectedPoints.removeAll(segment(segmenterMap.get(input.getActiveSegmenter())));
                 }
             }
         }
-        if(input.actionActive(ControllerInput.ActionType.CLEAR_ACTION)) {
+        if(input.actionActive(UIController.ActionType.CLEAR_ACTION)) {
             selectedPoints = new HashSet<Integer>();
         }
         model.selectPoints(selectedPoints);

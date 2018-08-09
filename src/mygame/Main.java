@@ -1,6 +1,6 @@
 package mygame;
 
-import mygame.control.VolumetricSceneController;
+import mygame.control.ui.controller.NavigationController;
 import com.jme3.app.SimpleApplication;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
@@ -26,8 +26,7 @@ public class Main extends SimpleApplication {
         app.start();
     }
     
-    
-    private VolumetricSceneController volCam;
+    private NavigationController navController;
     private Controller cloudController;
     
     /*
@@ -38,6 +37,8 @@ public class Main extends SimpleApplication {
     TODO: Add buttons to fit selection subset to a model, then give volume
     
     TODO: Finish reimplementing the remaining segmenters, add them to the toolbar frame.
+    
+    TODO: Disable selections that are illegal/unnecessary for UI (e.g. picking any graph not necessary for Paintbrush segmenter)
     
     TODO: Create 2 sliders in ToolboxInteractiveCloudManipulator: one for radius, one for tolerance, then just set the ones required for visible (since some segmentations may require both
     radius and tolerance). Also create two fields for each. Shove both in a panel, set entire panel visible or invisible
@@ -134,8 +135,8 @@ public class Main extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         flyCam.setEnabled(false);
-        volCam = new VolumetricSceneController(inputManager);
-        volCam.attachCamera(rootNode);
+        navController = new NavigationController(inputManager);
+        navController.attachCamera(rootNode);
         
         
         test();
@@ -154,7 +155,7 @@ public class Main extends SimpleApplication {
         
         this.cloudController = new Controller(inputManager, cam, new InteractivePointCloudManipulator(pointCloud));
         
-        volCam.attachChildren(pointCloud.getCloudNode());
+        navController.attachChildren(pointCloud.getCloudNode());
         
         
         
@@ -217,7 +218,7 @@ public class Main extends SimpleApplication {
     /* Use the main event loop to trigger repeating actions. */
     @Override
     public void simpleUpdate(float tpf) {
-        volCam.update(tpf);
+        navController.update(tpf);
         if(cloudController != null) cloudController.update(tpf);
     }
     

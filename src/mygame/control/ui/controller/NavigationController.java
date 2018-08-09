@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package mygame.control;
+package mygame.control.ui.controller;
 
 import com.jme3.input.InputManager;
 import com.jme3.input.KeyInput;
@@ -26,7 +26,7 @@ import mygame.control.ui.Updatable;
 
 
 
-public class VolumetricSceneController implements Updatable {
+public class NavigationController implements Updatable {
     private static final String[] ANALOG_ACTION_NAMES = {"FORWARD", "BACKWARD", "LEFT", "RIGHT", 
     "UP", "DOWN", "ZOOM_IN", "ZOOM_OUT"};
     private static final Trigger[] DEFAULT_ANALOG_ACTION_TRIGGERS = {new KeyTrigger(KeyInput.KEY_W),
@@ -56,7 +56,7 @@ public class VolumetricSceneController implements Updatable {
     /*
     Should all rotating be down about the center of the screen as opposed to what I have now?
     */
-    public VolumetricSceneController(InputManager inputManager) {
+    public NavigationController(InputManager inputManager) {
         this.cameraNode = new VolumetricsCameraNode();
         this.inputManager = inputManager;
         initMouseState();

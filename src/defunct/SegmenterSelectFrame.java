@@ -1,4 +1,4 @@
-package mygame.control.ui;
+package defunct;
 
 import java.awt.Color;
 import java.awt.Container;

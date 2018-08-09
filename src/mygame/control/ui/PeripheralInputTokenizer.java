@@ -7,6 +7,13 @@ import java.util.HashMap;
 import java.util.Map;
 import mygame.control.ui.PeripheralInputTokenizer.ActionActiveState.ActivationType;
 
+
+/*
+Contains a class that allows simple tracking of peripheral input states using different activiation patterns (on press,
+on release, etc.). Cannot handle all types of interactions that may be wanted, so use in cases where
+all functionality the class requires is simple enough that PeripheralInputTokenizer can handle it. Otherwise,
+program custom logic in a new class or within class.
+*/
 public class PeripheralInputTokenizer {
     
     private InputManager inputManager;

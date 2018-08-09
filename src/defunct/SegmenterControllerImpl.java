@@ -28,7 +28,6 @@ import defunct.segment.SimilarityThresholdedFloodfillCloudSegmenter;
 import defunct.segment.SimilarityToSelectionPointPaintBrushCloudSegmenter;
 import defunct.segment.SinglePointCloudSegmenter;
 import defunct.segment.SphericalPaintBrushPointCloudSegmenter;
-import mygame.control.ui.SegmenterSelectFrame;
 import mygame.util.GraphUtil;
 import mygame.util.JblasJMEConverter;
 

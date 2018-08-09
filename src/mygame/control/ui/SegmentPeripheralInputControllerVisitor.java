@@ -23,6 +23,8 @@ import mygame.model.segment.PaintbrushSegmenter;
 import mygame.model.segment.PaintbrushSegmenter.PaintbrushSegmenterArgs;
 import mygame.model.segment.Segmenter;
 import mygame.model.segment.SegmenterVisitor;
+import mygame.model.segment.SelectionSimilarityConstrainedPaintbrushSegmenter;
+import mygame.model.segment.SelectionSimilarityConstrainedPaintbrushSegmenter.SelectionSimilarityConstrainedPaintbrushSegmenterArgs;
 import mygame.util.JblasJMEConverter;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -30,7 +32,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 /*
 segments a set of points using peripheral (mouse + keyboard) input. Other settings can be adjusted externally. Made most sense to me to only put peripheral input in here.
 */
-public class SegmentPeripheralInputControllerVisitor implements SegmenterVisitor<Set<Integer>> {
+public class SegmentPeripheralInputControllerVisitor implements SegmenterVisitor<Set<Integer>>, SegmentContainer {
     private static final String SELECT_ACTION = "SELECT", CLEAR_ACTION = "CLEAR", ERASE_ACTION = "ERASE";
     private static final Trigger DEFAULT_SELECT_TRIGGER = new MouseButtonTrigger(MouseInput.BUTTON_LEFT),
             DEFAULT_CLEAR_TRIGGER = new KeyTrigger(KeyInput.KEY_C),
@@ -50,8 +52,8 @@ public class SegmentPeripheralInputControllerVisitor implements SegmenterVisitor
     private Set<Integer> currentlySelected = new HashSet<Integer>();
     private double segmentRadius = 0.5, segmentTolerance = 0.5;
     
-    
-    public SegmentPeripheralInputControllerVisitor(InputManager inputManager, Camera cam, Vector3f[] points) {
+    //would be nice if I could figure out a clean way to avoid passing points, since it is only used in one line of code in the entire class
+    public SegmentPeripheralInputControllerVisitor(InputManager inputManager, Camera cam, Vector3f[] points, NearestNeighborSearcher neighborSearcher) {
         screenNeighborSearcher = new PointSelectBFSNearestNeighborSearch(cam, points);
         screenNeighborSearcher.setDoUpdate(true);
         Thread t= new Thread(screenNeighborSearcher);
@@ -62,7 +64,7 @@ public class SegmentPeripheralInputControllerVisitor implements SegmenterVisitor
         
         this.points = JblasJMEConverter.toArr(points);
         this.inputManager = inputManager;
-        this.neighborSearcher = new KDTree(this.points);
+        this.neighborSearcher = neighborSearcher;
         
         this.inputTokenizer = new PeripheralInputTokenizer(inputManager);
         inputTokenizer.addMapping(SELECT_ACTION, DEFAULT_SELECT_TRIGGER, DEFAULT_SELECT_ACTIVE);
@@ -98,6 +100,20 @@ public class SegmentPeripheralInputControllerVisitor implements SegmenterVisitor
         return brushSegmenter.segment(args);
     }
 
+    
+    
+    @Override
+    public Set<Integer> visit(SelectionSimilarityConstrainedPaintbrushSegmenter constrainedPaintSegmenter) {
+        int nearestScreenNeighbor = getNearestScreenNeighbor();
+        if(nearestScreenNeighbor < 0) return new HashSet<Integer>();
+        SelectionSimilarityConstrainedPaintbrushSegmenterArgs args = new SelectionSimilarityConstrainedPaintbrushSegmenterArgs(activeGraph, 
+                neighborSearcher, 
+                points[nearestScreenNeighbor], 
+                segmentRadius, 
+                segmentTolerance);
+        return constrainedPaintSegmenter.segment(args);
+    }
+    
     @Override
     public Set<Integer> visit(FloodfillSegmenter fillSegmenter) {
         int nearestScreenNeighbor = getNearestScreenNeighbor();
@@ -105,6 +121,8 @@ public class SegmentPeripheralInputControllerVisitor implements SegmenterVisitor
         FloodfillSegmenterArgs args = new FloodfillSegmenterArgs(activeGraph, nearestScreenNeighbor, segmentTolerance);
         return fillSegmenter.segment(args);
     }
+    
+    
     
     private int getNearestScreenNeighbor() {
         Vector2f cursorPos = getCursorPos();
@@ -117,8 +135,16 @@ public class SegmentPeripheralInputControllerVisitor implements SegmenterVisitor
     this MUST be called in order to update the screen neighbor searcher after any kind of transformation is applied to the set of points
     */
     public void updateProjectionTransform(Matrix4f transform) {this.screenNeighborSearcher.setTransform(transform);}
+    
+    
     public void setSegmentRadius(double rad) {this.segmentRadius = rad;}
     public void setSegmentTolerance(double tol) {this.segmentTolerance = tol;}
+
+    @Override
+    public Set<Integer> getSegmentedIds() {
+        return currentlySelected;
+    }
+
 
     
 }

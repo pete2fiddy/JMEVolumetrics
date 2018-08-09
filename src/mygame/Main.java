@@ -10,7 +10,8 @@ import mygame.model.pointcloud.InteractivePointCloudManipulator;
 import mygame.view.pointcloud.PointCloud;
 import defunct.SegmenterControllerImpl;
 import defunct.SegmenterController;
-import mygame.control.ui.ToolboxInteractiveCloudManipulatorController;
+import javax.swing.UIManager;
+import mygame.control.ui.default_toolbox_cloud_manipulator.ToolboxInteractiveCloudManipulatorController;
 import mygame.util.JblasJMEConverter;
 
 /**
@@ -29,18 +30,26 @@ public class Main extends SimpleApplication {
     
     
     private VolumetricSceneController volCam;
-    //private SegmenterController cloudController;
     private ToolboxInteractiveCloudManipulatorController cloudController;
     
     /*
+    TODO: Add button for setting active mesh to a mesh of selected subset to ToolboxInteractiveCloudManipulatorController (custom listener to differentiate from the other toolbox button actionPerforms)
+    Create a 3d model from it, and display the mesh.
+    When active mesh is not null, display calculate volume button
     
-    TODO: Create segmentation methods with minimal arguments (e.g. floodfill: give graph, start node, tolerance)
+    TODO: Add buttons to fit selection subset to a model, then give volume
     
-   
+    TODO: Finish reimplementing the remaining segmenters, add them to the toolbar frame.
     
+    TODO: Create 2 sliders in ToolboxInteractiveCloudManipulator: one for radius, one for tolerance, then just set the ones required for visible (since some segmentations may require both
+    radius and tolerance). Also create two fields for each. Shove both in a panel, set entire panel visible or invisible
     
+    TODO: Add a panel to say which selection type (e.g. erase, clear, select) is active to ToolboxInteractiveCloudManipulatorController
     
+    TODO: add a sim metric that is just cos angle +1. This allows ORIENTED normals to be leveraged, and back faces, for example, to not be selected when a front
+    face is segmented. Then implement to be selectable in UI
     
+    TODO: add some better compatibility checking (e.g. not selecting a graph type when using floodfill) to SimpleToolbarFrame
     
     TODO: Create a method invoker using the command pattern
     
@@ -55,10 +64,22 @@ public class Main extends SimpleApplication {
 
     TODO: Use reflection to hold a segmentation method along with its arguments, since number of arguments can vary.
     
+    TODO (low priority): THink of a good way to force ToolbarFrame extenders to use actionlisteners that update all the 
+    attached action listeners (other than currently using createInternalListener())
+    
+    TODO (low priority): THink of a better way to force all graph and segmenter names into ToolbarFrame to be easy to
+    remember implementing functionality for all of them (i.e. figure out a way to pass enums for names instead of
+    iterables, then the enum can be switched on and is easier to not forget an implementation, and fewer constants 
+    need to be noted/saved).
+    
+    TODO: Remove text highlighting and selection cursor hovering over text fields in SimpleToolbarFrame
+    
     TODO: Remove dud classes
     
     TODO: When switching segmentation types, sometimes segmented point list gets wiped. Not sure of a good way to fix --
     have to somehow pass the actively selected points from the old segmenter to the new one
+    
+    TODO: Fix back-parts of cloud being selected by the bfs nearest enighbor search when cloud is sparse
     
     TODO: Find a better looking way to show a button as selected
     
@@ -73,9 +94,6 @@ public class Main extends SimpleApplication {
     
     TODO: Change InteractivePointCloud's selectPoint to selectPoint(int... ids) (same with unselect points)
     
-    TODO: Better split the segmenters from their roles in the UI (i.e. create a segmenter, then a wrapper for the segmenter
-    that lets it "talk" with Segmenter Controller). (wrapper funnels info from the controller into the segmenter, on update ideal so that
-    segmenter never has to "know" about anything other than the sim graph and what is TOLD to it (rather than what it pulls))
     
     Organization":
     

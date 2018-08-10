@@ -1,6 +1,6 @@
 package mygame;
 
-import mygame.control.ui.controller.NavigationController;
+import mygame.control.NavigationController;
 import com.jme3.app.SimpleApplication;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
@@ -30,6 +30,12 @@ public class Main extends SimpleApplication {
     private Controller cloudController;
     
     /*
+    
+    TODO: Ground plane selection (fill in gaps wth points)
+    
+    TODO: Process of calculating a mesh volume (orient normals -> surface net) MEGA slow
+    
+    
     TODO: Add button for setting active mesh to a mesh of selected subset to ToolboxInteractiveCloudManipulatorController (custom listener to differentiate from the other toolbox button actionPerforms)
     Create a 3d model from it, and display the mesh.
     When active mesh is not null, display calculate volume button
@@ -78,7 +84,7 @@ public class Main extends SimpleApplication {
     TODO: When switching segmentation types, sometimes segmented point list gets wiped. Not sure of a good way to fix --
     have to somehow pass the actively selected points from the old segmenter to the new one
     
-    TODO: Fix back-parts of cloud being selected by the bfs nearest enighbor search when cloud is sparse
+    TODO: Fix back-parts of cloud being selected by the bfs nearest enighbor search when cloud is sparse (problem gets better if you zoom out more)
     
     TODO: Find a better looking way to show a button as selected
     
@@ -148,12 +154,12 @@ public class Main extends SimpleApplication {
     
     
     private void test() {
-        Vector3f[] points = Test.generateCubesVec3f(25000, new Vector3f[] {new Vector3f(0f, 0f, 0f), new Vector3f(-3f, -4f, -3f)}, new float[] {2f, 1f});
+        Vector3f[] points = Test.generateSpheresVec3f(25000, new Vector3f[] {new Vector3f(0f, 0f, 0f), new Vector3f(-3f, -4f, -3f)}, new float[] {2f, 1f});
         
         PointCloud pointCloud = new PointCloud(assetManager, points, new ColorRGBA(1f, 0f, 0f, 1f), 20f);
         
         
-        this.cloudController = new Controller(inputManager, cam, new InteractivePointCloudManipulator(pointCloud));
+        this.cloudController = new Controller(assetManager, inputManager, cam, new InteractivePointCloudManipulator(pointCloud));
         
         navController.attachChildren(pointCloud.getCloudNode());
         

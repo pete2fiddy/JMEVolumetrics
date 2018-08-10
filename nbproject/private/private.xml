@@ -3,11 +3,14 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/control/ui/ToolboxInteractiveCloudManipulatorController.java</file>
-            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/control/ui/SimpleToolbarFrame.java</file>
-            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/control/ui/SegmentPeripheralInputControllerVisitor.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/control/ui/controller/ControllerToolboxFrame.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/model/volumetrics/surfaceextraction/NaiveSurfaceNet.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/control/ui/controller/Controller.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/control/ui/controller/ModelFitPanel.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/model/volumetrics/HoppeMeshMaker.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/model/volumetrics/CloudNormal.java</file>
             <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/Main.java</file>
-            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/control/ui/ToolbarFrame.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/control/NavigationController.java</file>
         </group>
     </open-files>
 </project-private>

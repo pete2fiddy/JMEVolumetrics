@@ -15,7 +15,7 @@ by painting them differently
 public class InteractivePointCloudManipulator extends PointCloudManipulator {
     
     
-    private static final float POINT_SELECT_SIZE_MULTIPLIER = 3f;
+    private static final float POINT_SELECT_SIZE_MULTIPLIER = 1.5f;
     private Map<Integer, CloudPoint> selectedPoints = new HashMap<Integer, CloudPoint>();
     
     public InteractivePointCloudManipulator(PointCloud pointCloud) {

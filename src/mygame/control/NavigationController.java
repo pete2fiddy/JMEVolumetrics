@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package mygame.control.ui.controller;
+package mygame.control;
 
 import com.jme3.input.InputManager;
 import com.jme3.input.KeyInput;

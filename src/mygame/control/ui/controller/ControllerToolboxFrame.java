@@ -28,8 +28,12 @@ public class ControllerToolboxFrame <GraphType extends Enum, SegmenterType exten
     private ColorChangingButton activeSegmenterComponent;
     private LabeledSliderPanel radiusSliderPanel = new LabeledSliderPanel(0,100);
     private LabeledSliderPanel toleranceSliderPanel = new LabeledSliderPanel(0,100);
+    private boolean updateModel = false;
+    private ModelFitPanel fitPanel;
+    private Controller controller;
     
-    public ControllerToolboxFrame(String name, Class<GraphType> graphTypeClass, Class<SegmenterType> segmenterTypeClass) {
+    public ControllerToolboxFrame(Controller controller, String name, Class<GraphType> graphTypeClass, Class<SegmenterType> segmenterTypeClass) {
+        this.controller = controller;
         getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
         setVisible(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -38,25 +42,29 @@ public class ControllerToolboxFrame <GraphType extends Enum, SegmenterType exten
         segmenterPanel.setLayout(new GridLayout(0,1));
         graphPanel.add(new JLabel("Graphs:"));
         segmenterPanel.add(new JLabel("Segmenters:"));
-        addButtons(graphPanel, graphTypeClass, graphListener, compToGraph);
-        addButtons(segmenterPanel, segmenterTypeClass, segmenterListener, compToSegmenter);
+        addButtons(graphPanel, graphTypeClass, GRAPH_LISTENER, compToGraph);
+        addButtons(segmenterPanel, segmenterTypeClass, SEGMENTER_LISTENER, compToSegmenter);
         
         this.add(graphPanel);
         this.add(segmenterPanel);
         
         radiusSliderPanel.setLayout(new BoxLayout(radiusSliderPanel, BoxLayout.X_AXIS));
         LabeledSliderPanel.setToDefaultLayout(radiusSliderPanel);
-        radiusSliderPanel.slider.addChangeListener(radiusSliderListener);
+        radiusSliderPanel.slider.addChangeListener(RADIUS_SLIDER_LISTENER);
         
         toleranceSliderPanel.setLayout(new BoxLayout(toleranceSliderPanel, BoxLayout.X_AXIS));
         LabeledSliderPanel.setToDefaultLayout(toleranceSliderPanel);
-        toleranceSliderPanel.slider.addChangeListener(toleranceSliderListener);
+        toleranceSliderPanel.slider.addChangeListener(TOLERANCE_SLIDER_LISTENER);
         
         radiusSliderPanel.label.setText("Radius: ");
         toleranceSliderPanel.label.setText("Tolerance: ");
         
         this.add(radiusSliderPanel);
         this.add(toleranceSliderPanel);
+        
+        this.fitPanel = new ModelFitPanel(FIT_MODEL_LISTENER, CALC_VOLUME_LISTENER);
+        add(this.fitPanel);
+        
         pack();
     }
     
@@ -74,6 +82,7 @@ public class ControllerToolboxFrame <GraphType extends Enum, SegmenterType exten
         }
     }
     
+    protected boolean getModelNeedsToUpdate() {boolean out = updateModel; updateModel = false; return out;}
     
     protected SegmenterType getActiveSegmenter() {return compToSegmenter.get(activeSegmenterComponent);}
     
@@ -89,21 +98,38 @@ public class ControllerToolboxFrame <GraphType extends Enum, SegmenterType exten
             ((double)(toleranceSliderPanel.slider.getMaximum()-toleranceSliderPanel.slider.getMinimum()));
     }
     
-    private final ChangeListener radiusSliderListener = new ChangeListener() {
+    
+    private final ActionListener FIT_MODEL_LISTENER = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+            updateModel = true;
+            fitPanel.calcVolumeButton.setVisible(true);
+        }
+    };
+            
+    private final ActionListener CALC_VOLUME_LISTENER = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+            CalcVolumeOutputFrame volDisplay = new CalcVolumeOutputFrame(controller.calcActiveModelVolume());
+        }
+    };
+    
+    
+    private final ChangeListener RADIUS_SLIDER_LISTENER = new ChangeListener() {
         @Override
         public void stateChanged(ChangeEvent ce) {
             radiusSliderPanel.label.setText("Radius: " + Double.toString(getSegmentRadius()));
         }
     };
     
-    private final ChangeListener toleranceSliderListener = new ChangeListener() {
+    private final ChangeListener TOLERANCE_SLIDER_LISTENER = new ChangeListener() {
         @Override
         public void stateChanged(ChangeEvent ce) {
             toleranceSliderPanel.label.setText("Tolerance: " + Double.toString(getSegmentTolerance()));
         }  
     };
     
-    private final ActionListener graphListener = new ActionListener() {
+    private final ActionListener GRAPH_LISTENER = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent ae) {
             if(activeGraphComponent != null) activeGraphComponent.setBackground(UNSELECTED_COLOR);
@@ -112,7 +138,7 @@ public class ControllerToolboxFrame <GraphType extends Enum, SegmenterType exten
         }
     };
             
-    private final ActionListener segmenterListener = new ActionListener() {
+    private final ActionListener SEGMENTER_LISTENER = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent ae) {
             //TODO: implement slider visibility logic

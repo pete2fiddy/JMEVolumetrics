@@ -22,8 +22,8 @@ public class UIController <GraphType extends Enum, SegmenterType extends Enum> e
     private Vector2f selectPos;
     private InputManager inputManager;
     
-    public UIController(InputManager inputManager, Class<GraphType> graphTypeClass, Class<SegmenterType> segmenterTypeClass) {
-        super("Toolbox", graphTypeClass, segmenterTypeClass);
+    public UIController(Controller controller, InputManager inputManager, Class<GraphType> graphTypeClass, Class<SegmenterType> segmenterTypeClass) {
+        super(controller, "Toolbox", graphTypeClass, segmenterTypeClass);
         this.inputManager = inputManager;
         initInputTokenizer();
     }

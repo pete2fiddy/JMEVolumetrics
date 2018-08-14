@@ -4,12 +4,14 @@ import mygame.control.NavigationController;
 import com.jme3.app.SimpleApplication;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
+import java.util.Comparator;
 import mygame.model.data.search.KDTree;
 import mygame.model.data.search.NearestNeighborSearcher;
 import mygame.model.pointcloud.InteractivePointCloudManipulator;
 import mygame.view.pointcloud.PointCloud;
 import javax.swing.UIManager;
 import mygame.control.ui.controller.Controller;
+import mygame.model.data.search.priorityqueue.ArrayBinaryMinHeap;
 import mygame.util.JblasJMEConverter;
 
 /**
@@ -31,79 +33,28 @@ public class Main extends SimpleApplication {
     
     /*
     
-    TODO: Ground plane selection (fill in gaps wth points)
+    TODO: Orient model faces so that closest faces, instead of far, are buffered on top (flip all normals of model so it looks correct)
+    
+    TODO: Add model resolution slider
+    
+    TODO: Make arrayBinaryHeap and IndexTrackingArrayBinaryHeap more private to GraphUtil, or extend a more general implementation (array binary heap should ideally not give
+    normal operation access to indices and stuff, and both are a bit confusing for general use).
     
     TODO: Process of calculating a mesh volume (orient normals -> surface net) MEGA slow
     
+    TODO: Ground plane selection (fill in gaps wth points)
     
-    TODO: Add button for setting active mesh to a mesh of selected subset to ToolboxInteractiveCloudManipulatorController (custom listener to differentiate from the other toolbox button actionPerforms)
-    Create a 3d model from it, and display the mesh.
-    When active mesh is not null, display calculate volume button
+    TODO: Add a panel to say which selection type (e.g. erase, clear, select) is active to ToolboxInteractiveCloudManipulatorController, and contain buttons for each time
     
-    TODO: Add buttons to fit selection subset to a model, then give volume
-    
-    TODO: Finish reimplementing the remaining segmenters, add them to the toolbar frame.
-    
-    TODO: Disable selections that are illegal/unnecessary for UI (e.g. picking any graph not necessary for Paintbrush segmenter)
-    
-    TODO: Create 2 sliders in ToolboxInteractiveCloudManipulator: one for radius, one for tolerance, then just set the ones required for visible (since some segmentations may require both
-    radius and tolerance). Also create two fields for each. Shove both in a panel, set entire panel visible or invisible
-    
-    TODO: Add a panel to say which selection type (e.g. erase, clear, select) is active to ToolboxInteractiveCloudManipulatorController
-    
-    TODO: add a sim metric that is just cos angle +1. This allows ORIENTED normals to be leveraged, and back faces, for example, to not be selected when a front
-    face is segmented. Then implement to be selectable in UI
-    
-    TODO: add some better compatibility checking (e.g. not selecting a graph type when using floodfill) to SimpleToolbarFrame
-    
-    TODO: Create a method invoker using the command pattern
-    
-    TODO: Create an abstract extension of the method invoker, with an abstract method that updates all fields the controller would have access to, and has
-    another abstract method to invoke the m
-    
-    TODO: Move graph algos from segmenters into graph utils, or perhaps dedicate classes to graph algos since graphutils is getting pretty big. Make segmenter's 
-    sole job to perform graph algorithm given the minimum necessary params (which are completely detached from any kind of UI at all, thatis the control's job to
-    tell the model what the params are)
-    
-    Control's job is to select the currnetly active segmenter and tell it what commands to use that are constructed using UI input (slider for tolerance, etc.)
-
-    TODO: Use reflection to hold a segmentation method along with its arguments, since number of arguments can vary.
-    
-    TODO (low priority): THink of a good way to force ToolbarFrame extenders to use actionlisteners that update all the 
-    attached action listeners (other than currently using createInternalListener())
-    
-    TODO (low priority): THink of a better way to force all graph and segmenter names into ToolbarFrame to be easy to
-    remember implementing functionality for all of them (i.e. figure out a way to pass enums for names instead of
-    iterables, then the enum can be switched on and is easier to not forget an implementation, and fewer constants 
-    need to be noted/saved).
-    
-    TODO: Remove text highlighting and selection cursor hovering over text fields in SimpleToolbarFrame
-    
-    TODO: Remove dud classes
-    
-    TODO: When switching segmentation types, sometimes segmented point list gets wiped. Not sure of a good way to fix --
-    have to somehow pass the actively selected points from the old segmenter to the new one
+    TODO: add some better compatibility checking (e.g. not selecting a graph type when using floodfill) to SimpleToolbarFrame (basically prevents crashes)
     
     TODO: Fix back-parts of cloud being selected by the bfs nearest enighbor search when cloud is sparse (problem gets better if you zoom out more)
     
-    TODO: Find a better looking way to show a button as selected
-    
-    TODO: Finish implementing a clicky panel UI.
-    
-    TODO: Add buttons for erase toggle, etc for painting segmentation.
-    
-    TODO: Fix segmenters having their own selction pools when switching between them. Somehow pool their selection pool? (i.e. I might want to floodfill a face then paint another one,
-    but switching to paint clears the floodfill)
-    
     TODO: need to enable depth buffering. With point clouds, points definitely in front can get painted behind.
     
-    TODO: Change InteractivePointCloud's selectPoint to selectPoint(int... ids) (same with unselect points)
-    
+    TODO: Speed up surface net
     
     Organization":
-    
-    
-    Change kmeans jme clusterer to use double matrix
     
     Create simple connected/not connected graph type without values.
     
@@ -111,15 +62,15 @@ public class Main extends SimpleApplication {
     similarity metric compatiability with certain segmenters is hard to tell without looking at code (for example,
     constructing a distance weighted graph requires a JME metric and a JBlas metric)
     
-    
+    Nice to have: enable/disable segmentation sliders based on the properties of the active segmenter
+    Nice to have: Disable selections that are illegal/unnecessary for UI (e.g. picking any graph not necessary for Paintbrush segmenter)
+    Nice to have: Implement more graphs/segmenters (a distance weighted angle normal one, for example)
+    Nice to have: add a sim metric that is just cos angle +1. This allows ORIENTED normals to be leveraged, and back faces, for example, to not be selected when a front
+    face is segmented. Then implement to be selectable in UI
     
     TODO: 
     
     Speed up graph recalculation when point moved in InteractivePointCloudManipulator
-    
-    Move the final grpahs from interactive point cloud to the implemetnation of SegmenterToolController
-    
-    Rename KeyboardSegmenterToolController to PeripheralSegmenterToolController (works with mouse and keyboard -- peripherals)
     
     After refactoring KDTree references into a more general NearestNeighborSearcher, lots of variables kept a name that specifically references KDTree. Change them.
     
@@ -127,12 +78,6 @@ public class Main extends SimpleApplication {
     
     Make it possible to get a subset of outedges from a graph node (useful so that not all connections to a node are calculated on the fly
     in the on the fly graph, if, for example, only nodes within a radius of the center are wanted)
-    
-    
-    
-    Add a segmenter that grows a radius when user drags
-    
-    
     
     -------------------
     //see: https://wiki.jmonkeyengine.org/jme3/beginner/hello_material.html
@@ -145,12 +90,27 @@ public class Main extends SimpleApplication {
         navController.attachCamera(rootNode);
         
         
+        //testQueue();
+        
         test();
         //figure out how to close the UI frame when main frame is closed
         //make everything exit on escape
         //InteractivePointCloudToolController frame = new SegmenterSelectFrame(pointCloudController, 200, 700);
     }
     
+    
+    private void testQueue() {
+        
+        Integer[] data = {1,3,4,6,5,7,10,12,9};
+        
+        ArrayBinaryMinHeap<Integer> heap = new ArrayBinaryMinHeap(data.length);
+        for(int d : data) {
+            heap.add(d, d);
+        }
+        while(heap.size() > 0) {
+            System.out.println("min: " + heap.pop());
+        }
+    }
     
     
     private void test() {

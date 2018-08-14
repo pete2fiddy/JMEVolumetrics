@@ -13,6 +13,7 @@ import mygame.model.graph.SymmetricGraph;
 import mygame.model.data.ml.similarity.SimilarityMetric;
 import mygame.model.data.ml.similarity.jblas.JblasCosAngleSquaredSimilarity;
 import mygame.model.data.ml.similarity.jblas.JblasRiemannianCost;
+import mygame.model.graph.algo.PrimsMinSpan;
 import mygame.model.volumetrics.CloudNormal;
 import mygame.model.volumetrics.Facet;
 import mygame.model.volumetrics.IndexedVolume;
@@ -133,14 +134,13 @@ public class VolumeUtil {
     
     public static void hoppeOrientFaces(IndexedVolume v) {
         SymmetricGraph faceRiemannian = constructVolumeNormalRiemannian(v);
-        Graph minSpanRiemannian = GraphUtil.primsMinimumSpanningTree(faceRiemannian, 0);
+        Graph minSpanRiemannian = PrimsMinSpan.buildMST(faceRiemannian, 0);
         DoubleMatrix normals = DoubleMatrix.zeros(v.numFacets(), 3);
         for(int i = 0; i < normals.rows; i++) {
             normals.putRow(i, v.getFacet(i).getNormalClone());
         }
         Set<Integer> toFlipFacetInds = new HashSet<Integer>();
         CloudNormal.setIndsToHoppeOrientNormalsWithRiemannianMinSpanTree(normals, minSpanRiemannian, 0, toFlipFacetInds);
-        System.out.println("to flip facet inds: " + toFlipFacetInds);
         for(int flipFacet : toFlipFacetInds) {
             v.flipOrientation(flipFacet);
         }

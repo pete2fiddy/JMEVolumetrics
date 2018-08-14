@@ -5,10 +5,13 @@
         <group>
             <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/control/ui/controller/ControllerToolboxFrame.java</file>
             <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/model/volumetrics/surfaceextraction/NaiveSurfaceNet.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/util/GraphUtil.java</file>
             <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/control/ui/controller/Controller.java</file>
             <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/control/ui/controller/ModelFitPanel.java</file>
             <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/model/volumetrics/HoppeMeshMaker.java</file>
             <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/model/volumetrics/CloudNormal.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/model/data/search/priorityqueue/MyPriorityQueue.java</file>
+            <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/model/data/search/priorityqueue/ArrayBinaryHeap.java</file>
             <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/Main.java</file>
             <file>file:/C:/Users/Owner/Documents/TutorialOne/src/mygame/control/NavigationController.java</file>
         </group>

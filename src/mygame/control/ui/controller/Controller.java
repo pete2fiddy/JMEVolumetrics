@@ -22,6 +22,7 @@ import mygame.model.data.search.NearestNeighborSearcher;
 import mygame.model.data.search.PointSelectBFSNearestNeighborSearch;
 import mygame.model.graph.Graph;
 import mygame.model.graph.OnTheFlySimilarityGraph;
+import mygame.model.graph.SimilarityGraphUtil;
 import mygame.model.pointcloud.InteractivePointCloudManipulator;
 import mygame.model.segment.FloodfillSegmenter;
 import mygame.model.segment.PaintbrushSegmenter;
@@ -46,7 +47,7 @@ import org.jblas.DoubleMatrix;
 public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
     private static final double RECONSTRUCTION_ISO_VALUE = 0;
     private static final int N_NORMALS_NEIGHBOR = 20, N_ORIENTATION_NEIGHBORS = 12;
-    private static final double SURFACE_NETS_CUBE_DIM = 0.5;
+    private static final double SURFACE_NETS_CUBE_DIM = 0.25;
     private final Material MODEL_MAT;
     private static final ColorRGBA MODEL_COLOR = new ColorRGBA(0f,1f,1f,1f);
     private UIController<GraphType, SegmenterType> input;
@@ -94,8 +95,8 @@ public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
         segmenterMap.put(SegmenterType.PAINTBRUSH, new PaintbrushSegmenter());
         segmenterMap.put(SegmenterType.CONSTRAINED_PAINTBRUSH, new SelectionSimilarityConstrainedPaintbrushSegmenter());
 
-        graphMap.put(GraphType.SPARSE_DISTANCE, GraphUtil.constructSparseSimilarityGraph(points, new JMERadialBasisSimilarity(), neighborSearcher, 6));
-        graphMap.put(GraphType.SPARSE_ANGLE, GraphUtil.constructSparseSimilarityGraph(JblasJMEConverter.toVector3f(normals), new JMECosAngleSquaredSimilarity(), neighborSearcher, 6));
+        graphMap.put(GraphType.SPARSE_DISTANCE, SimilarityGraphUtil.constructSparseSimilarityGraph(points, new JMERadialBasisSimilarity(), neighborSearcher, 6));
+        graphMap.put(GraphType.SPARSE_ANGLE, SimilarityGraphUtil.constructSparseSimilarityGraph(JblasJMEConverter.toVector3f(normals), new JMECosAngleSquaredSimilarity(), neighborSearcher, 6));
         graphMap.put(GraphType.ON_THE_FLY_ANGLE, new OnTheFlySimilarityGraph(JblasJMEConverter.toVector3f(normals), new JMECosAngleSquaredSimilarity()));
     }
     

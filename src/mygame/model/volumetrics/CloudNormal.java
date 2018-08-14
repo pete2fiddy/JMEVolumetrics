@@ -14,6 +14,7 @@ import mygame.model.graph.SparseGraph;
 import mygame.model.graph.SymmetricGraph;
 import mygame.model.data.ml.CurvatureSimilarityGraphConstructor;
 import mygame.model.data.ml.JblasPCA;
+import mygame.model.graph.algo.PrimsMinSpan;
 import mygame.util.GraphUtil;
 import mygame.util.JblasJMEConverter;
 import org.jblas.DoubleMatrix;
@@ -40,7 +41,7 @@ public class CloudNormal {
         SymmetricGraph riemannian = CurvatureSimilarityGraphConstructor.constructRiemannianPCASimilarityGraph(X, normals, kdTree, kNeighborsRiemannian);
         int headId = 0;
         //paper talks about how to choose a good head id, but using an arbitrary value for now
-        Graph riemannianMinSpanTree = GraphUtil.primsMinimumSpanningTree(riemannian, headId);
+        Graph riemannianMinSpanTree = PrimsMinSpan.buildMST(riemannian, headId);
         setIndsToHoppeOrientNormalsWithRiemannianMinSpanTree(normals, riemannianMinSpanTree, headId, new HashSet<Integer>());
     }
     

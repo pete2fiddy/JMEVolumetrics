@@ -106,7 +106,6 @@ public class KMeansSearchTree {
                 return;
             }
             Vector3f[] tempChildCentroids = JMEKMeans.calcKMeansCentroids(X, centroidsPerKMeans, itersPerKMeans);
-            System.out.println("child centroids: " + Arrays.toString(tempChildCentroids));
             LinkedList<Vector3f>[] childClusters = JMEKMeans.assignToClusters(tempChildCentroids, X);
             
             ArrayList<Integer> nonEmptyClusterIds = new ArrayList<Integer>();

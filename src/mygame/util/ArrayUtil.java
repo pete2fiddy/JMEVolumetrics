@@ -26,4 +26,9 @@ public class ArrayUtil {
         return indices[0] >= 0 && indices[0] < arr.length && indices[1] >= 0 && indices[1] < arr[indices[0]].length;
     }
     
+    public static <D> void swap(D[] arr, int ind1, int ind2) {
+        D ind1Temp = arr[ind1];
+        arr[ind1] = arr[ind2];
+        arr[ind2] = ind1Temp;
+    }
 }

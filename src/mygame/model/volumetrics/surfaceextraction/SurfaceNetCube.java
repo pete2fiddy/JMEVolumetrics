@@ -83,6 +83,7 @@ public class SurfaceNetCube {
     }
     
     
+    
     public Box getGeom() {
         return new Box(JblasJMEConverter.toVector3f(corners.getRow(0))[0],
         JblasJMEConverter.toVector3f(corners.getRow(6))[0]);

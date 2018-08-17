@@ -4,16 +4,23 @@ import mygame.control.NavigationController;
 import com.jme3.app.SimpleApplication;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Comparator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mygame.model.data.search.KDTree;
 import mygame.model.data.search.NearestNeighborSearcher;
 import mygame.model.pointcloud.InteractivePointCloudManipulator;
 import mygame.view.pointcloud.PointCloud;
 import javax.swing.UIManager;
 import mygame.control.ui.controller.Controller;
+import mygame.model.data.load.SimpleCloudLoader;
+import mygame.model.data.save.SimpleCloudSaver;
 import mygame.model.data.search.priorityqueue.ArrayBinaryMinHeap;
 import mygame.util.JblasJMEConverter;
 import mygame.util.RandomUtil;
+import mygame.view.pointcloud.CloudPoint;
 
 /**
  * This is the Main Class of your Game. You should only do initialization here.
@@ -29,10 +36,13 @@ public class Main extends SimpleApplication {
         app.start();
     }
     
-    private NavigationController navController;
     private Controller cloudController;
     
     /*
+    
+    TODO: Ground plane selection (fill in gaps wth points)
+    
+    TODO: Change "show controls" frame to be more informative about key input.
     
     TODO: Even fairly small clouds for whatever reason can take a long time to appear on screen...
     
@@ -48,13 +58,12 @@ public class Main extends SimpleApplication {
     once for model and once for volume, would also be a waste.
     
     TODO: RBFMeshMaker memory overflows on medium and greater sized point sets, and is slow. Fix. Can sparsify the system using a nearest neighbor searcher
-    and restricting the number of neighbors used when summing the RBFs. Use when constructing and evaluating the rbf
-    
-    TODO: Orient model faces so that closest faces, instead of far, are buffered on top (flip all normals of model so it looks correct)
+    and restricting the number of neighbors used when summing the RBFs. Use when constructing and evaluating the rbf. If nto sparsified, the approach in general
+    has poor runtime order since it solves a linear system with number of equations equal to the number of points.
     
     TODO: Add model resolution slider
     
-    TODO: Ground plane selection (fill in gaps wth points)
+   
     
     TODO: Add a panel to say which selection type (e.g. erase, clear, select) is active to ToolboxInteractiveCloudManipulatorController, and contain buttons for each time
     
@@ -100,85 +109,26 @@ public class Main extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         flyCam.setEnabled(false);
-        navController = new NavigationController(inputManager);
-        navController.attachCamera(rootNode);
-        
-        
-        //testQueue();
-        
         test();
-        //figure out how to close the UI frame when main frame is closed
-        //make everything exit on escape
-        //InteractivePointCloudToolController frame = new SegmenterSelectFrame(pointCloudController, 200, 700);
     }
     
     
     private void test() {
-        Vector3f[] points = Test.generateRandomShapes(1000, 3, 3);//Test.generateCubesVec3f(10000, new Vector3f[] {new Vector3f(0f, 0f, 0f), new Vector3f(-3f, -4f, -3f)}, new float[] {2f, 1f});
-        
+        Vector3f[] points = Test.generateRandomShapes(1000, 3, 3);
+        /*
+        Vector3f[] points = null;
+        try {
+            points = SimpleCloudLoader.load("C:/Users/Owner/Desktop/saved_cloud.txt"); ////Test.generateCubesVec3f(10000, new Vector3f[] {new Vector3f(0f, 0f, 0f), new Vector3f(-3f, -4f, -3f)}, new float[] {2f, 1f});
+        } catch (IOException ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+            return;
+        }
+        */
         PointCloud pointCloud = new PointCloud(assetManager, points, new ColorRGBA(1f, 0f, 0f, 1f), 20f);
         
         
         this.cloudController = new Controller(assetManager, inputManager, cam, new InteractivePointCloudManipulator(pointCloud));
-        
-        navController.attachChildren(pointCloud.getCloudNode());
-        
-        
-        
-        NearestNeighborSearcher pointsKDTree = new KDTree(JblasJMEConverter.toDoubleMatrix(points).toArray2());
-        
-        
-        /*
-        
-        DoubleMatrix normals = CloudNormal.getUnorientedPCANormals(JblasJMEConverter.toDoubleMatrix(points), 
-                pointsKDTree, 30);
-        CloudNormal.hoppeOrientNormals(JblasJMEConverter.toDoubleMatrix(points), normals, pointsKDTree, 6);
-        
-        
-        double cubeWidth = .5;
-        //can leave holes if not enough points used for reconstruction. Likely just a flaw with Hoppe's isosurface function, though.
-        Volume volume = NaiveSurfaceNet.getVolume(new HoppeMeshMaker(JblasJMEConverter.toDoubleMatrix(points), normals, pointsKDTree), 0, PointUtil.getPointBounds3d(
-        JblasJMEConverter.toDoubleMatrix(points)), cubeWidth, 1);
-        IndexedVolume indexedVolume = VolumeUtil.convertToIndexedVolume(volume, 0.000005);
-        VolumeUtil.useCloudNormalsToOrientFaces(pointsKDTree, normals, indexedVolume);
-        VolumeUtil.useCloudNormalsToOrientFaces(pointsKDTree, normals, volume);
-        
-        Map<NetCoord, SurfaceNetCube> cubeNet = NaiveSurfaceNet.getIntersectingCubes(new HoppeMeshMaker(JblasJMEConverter.toDoubleMatrix(points), normals, pointsKDTree), 0, PointUtil.getPointBounds3d(
-        JblasJMEConverter.toDoubleMatrix(points)), cubeWidth);
-        
-        for(NetCoord key : cubeNet.keySet()) {
-            Box b = cubeNet.get(key).getGeom();
-            Material m = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-            m.setColor("Color", ColorRGBA.Yellow);
-            m.getAdditionalRenderState().setWireframe(true);
-            m.getAdditionalRenderState().setLineWidth(1f);
-            Geometry g = new Geometry("Box", b);
-            g.setMaterial(m);
-            //pointCloud.getCloudNode().attachChild(g);
-        }
-        
-        
-        
-        Mesh volumeMesh = MeshUtil.createNoIndexMesh(volume);//createIndexedMesh(indexedVolume);
-        Geometry volumeGeom = new Geometry("volume geometry", volumeMesh);
-        Geometry volumeFrameGeom = new Geometry("volume frame geometry", volumeMesh);
-        Material volumeMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        Material volumeFrameMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        volumeFrameMat.setColor("Color", new ColorRGBA(1f,1f,1f,1f));
-        volumeFrameMat.getAdditionalRenderState().setWireframe(true);
-        volumeFrameMat.getAdditionalRenderState().setLineWidth(1f);
-        volumeMat.setColor("Color", new ColorRGBA(1f,0f,1f, .5f));
-        volumeGeom.setMaterial(volumeMat);
-        volumeFrameGeom.setMaterial(volumeFrameMat);
-        //pointCloud.getCloudNode().attachChild(volumeGeom);
-        //pointCloud.getCloudNode().attachChild(volumeFrameGeom);
-        
-        System.out.println("VOLUME not indexed: " + VolumeSolver.calcVolume(volume));
-        System.out.println("VOLUME indexed: " + VolumeSolver.calcVolume(indexedVolume));
-        System.out.println("non indexed num facets: " + volume.numFacets());
-        System.out.println("indexed num facets: " + indexedVolume.numFacets());
-        */
-        
+        cloudController.setParent(rootNode);
     }
     
     
@@ -187,7 +137,6 @@ public class Main extends SimpleApplication {
     /* Use the main event loop to trigger repeating actions. */
     @Override
     public void simpleUpdate(float tpf) {
-        navController.update(tpf);
         if(cloudController != null) cloudController.update(tpf);
     }
     

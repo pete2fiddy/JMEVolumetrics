@@ -10,6 +10,7 @@ import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -35,9 +36,15 @@ public class ControllerToolboxFrame <GraphType extends Enum, SegmenterType exten
     
     public ControllerToolboxFrame(Controller controller, String name, Class<GraphType> graphTypeClass, Class<SegmenterType> segmenterTypeClass) {
         this.controller = controller;
-        getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+        getContentPane().setLayout(new GridLayout(0,1));//new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
         setVisible(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        JButton controlsButton = new JButton("Controls");
+        controlsButton.addActionListener(CONTROLS_LISTENER);
+        this.getContentPane().add(controlsButton);
+        
+        
         
         graphPanel.setLayout(new GridLayout(0,1));
         segmenterPanel.setLayout(new GridLayout(0,1));
@@ -144,6 +151,13 @@ public class ControllerToolboxFrame <GraphType extends Enum, SegmenterType exten
             if(activeGraphComponent != null) activeGraphComponent.setBackground(UNSELECTED_COLOR);
             activeGraphComponent = (ColorChangingButton)ae.getSource();
             activeGraphComponent.setBackground(SELECTED_COLOR);
+        }
+    };
+    
+    private final ActionListener CONTROLS_LISTENER = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+            new ControlsFrame(controller.getBindings());
         }
     };
             

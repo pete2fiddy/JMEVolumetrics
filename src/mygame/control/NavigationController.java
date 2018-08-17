@@ -21,6 +21,7 @@ import com.jme3.scene.Spatial;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mygame.control.ui.Updatable;
@@ -30,21 +31,8 @@ import org.jblas.DoubleMatrix;
 
 
 public class NavigationController implements Updatable {
-    private static final String[] ANALOG_ACTION_NAMES = {"FORWARD", "BACKWARD", "LEFT", "RIGHT", 
-    "UP", "DOWN", "ZOOM_IN", "ZOOM_OUT"};
-    private static final Trigger[] DEFAULT_ANALOG_ACTION_TRIGGERS = {new KeyTrigger(KeyInput.KEY_W),
-        new KeyTrigger(KeyInput.KEY_S),
-        new KeyTrigger(KeyInput.KEY_D),
-        new KeyTrigger(KeyInput.KEY_A),
-        new KeyTrigger(KeyInput.KEY_SPACE),
-        new KeyTrigger(KeyInput.KEY_LSHIFT),
-        new MouseAxisTrigger(MouseInput.AXIS_WHEEL, false),
-        new MouseAxisTrigger(MouseInput.AXIS_WHEEL, true)};
-    
-    private static final String[] DISCRETE_ACTION_NAMES = {"ROTATE_TOGGLE", "DRAG_TOGGLE"};
-    private static final Trigger[] DEFAULT_DISCRETE_ACTION_TRIGGERS = {
-        new MouseButtonTrigger(MouseInput.BUTTON_RIGHT),
-        new MouseButtonTrigger(MouseInput.BUTTON_MIDDLE)};
+    private final Map<String, Trigger> analogActionTriggerMap = new HashMap<String, Trigger>();
+    private final Map<String, Trigger> discreteActionTriggerMap = new HashMap<String, Trigger>();
     
     private static final float MOVE_VELOCITY = 6f;
     private static final float ROTATE_VELOCITY_PER_PIXEL = 0.005f;
@@ -67,11 +55,22 @@ public class NavigationController implements Updatable {
     }
     
     private void addMappings() {
-        for(int i = 0; i < DISCRETE_ACTION_NAMES.length; i++) {
-            addDiscreteMapping(DISCRETE_ACTION_NAMES[i], DEFAULT_DISCRETE_ACTION_TRIGGERS[i]);
+        analogActionTriggerMap.put("FORWARD", new KeyTrigger(KeyInput.KEY_W));
+        analogActionTriggerMap.put("BACKWARD",  new KeyTrigger(KeyInput.KEY_S));
+        analogActionTriggerMap.put("LEFT", new KeyTrigger(KeyInput.KEY_D));
+        analogActionTriggerMap.put("RIGHT", new KeyTrigger(KeyInput.KEY_A));
+        analogActionTriggerMap.put("UP", new KeyTrigger(KeyInput.KEY_SPACE));
+        analogActionTriggerMap.put("DOWN", new KeyTrigger(KeyInput.KEY_LSHIFT));
+        analogActionTriggerMap.put("ZOOM_IN", new MouseAxisTrigger(MouseInput.AXIS_WHEEL, false));
+        analogActionTriggerMap.put("ZOOM_OUT", new MouseAxisTrigger(MouseInput.AXIS_WHEEL, true));
+        
+        discreteActionTriggerMap.put("ROTATE_TOGGLE", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
+        discreteActionTriggerMap.put("DRAG_TOGGLE", new MouseButtonTrigger(MouseInput.BUTTON_MIDDLE));
+        for(String discreteActionName : discreteActionTriggerMap.keySet()) {
+            addDiscreteMapping(discreteActionName, discreteActionTriggerMap.get(discreteActionName));
         }
-        for(int i = 0; i < ANALOG_ACTION_NAMES.length; i++) {
-            addAnalogMapping(ANALOG_ACTION_NAMES[i], DEFAULT_ANALOG_ACTION_TRIGGERS[i]);
+        for(String analogActionName : analogActionTriggerMap.keySet()) {
+            addAnalogMapping(analogActionName, analogActionTriggerMap.get(analogActionName));
         }
     }
     
@@ -147,11 +146,11 @@ public class NavigationController implements Updatable {
         }
     }
     
-    public void attachCamera(Node attachee) {
+    public void setParent(Node attachee) {
         attachee.attachChild(cameraNode);
     }
     
-    public void detachCamera(Node attachee) {
+    public void unsetParent(Node attachee) {
         attachee.detachChild(cameraNode);
     }
 
@@ -193,6 +192,10 @@ public class NavigationController implements Updatable {
         mousePos = newMousePos;
         
     }
+    
+    public Map<String, Trigger> getAnalogBindings(){return analogActionTriggerMap;}
+    
+    public Map<String, Trigger> getDiscreteBindings(){return discreteActionTriggerMap;}
     
     private class VolumetricsCameraNode extends Node {
         private Node leftRightRotNode = new Node();
@@ -242,57 +245,4 @@ public class NavigationController implements Updatable {
             return moveNode.detachChild(s);
         }
     }
-    
-    /*
-    private class VolumetricsCameraNode extends Node {
-        private Node leftRightRotNode = new Node();
-        private Node upDownRotNode = new Node();
-        
-        public VolumetricsCameraNode() {
-            super();
-            //super.attachChild(leftRightRotNode);
-            //super.attachChild(upDownRotNode);
-            super.attachChild(upDownRotNode);
-            upDownRotNode.attachChild(leftRightRotNode);
-        }
-        
-        protected void spinLeftRight(float angle) {
-            leftRightRotNode.rotate(0f, angle, 0f);
-        }
-        
-        protected void spinDownUp(float angle) {
-            upDownRotNode.rotate(angle, 0f, 0f);
-        }
-        
-        protected void setDownUpSpin(float angle) {
-            float rotation = this.getDownUpSpin();
-            upDownRotNode.rotate(angle - rotation, 0f, 0f);
-        }
-        
-        public float getDownUpSpin() {
-            return upDownRotNode.getLocalRotation().toAngles(new float[3])[0];
-        }
-        
-        //slides this camera node such that its height remains constant (like dragging a piece of paper on the table)
-        public void slideBackwardForward(float amount) {
-            double angle = -getDownUpSpin();
-            this.move(0f, (float)(Math.sin(angle)*amount), (float)(Math.cos(angle)*amount));
-        }
-        
-        @Override
-        public Spatial move(float x, float y, float z) {
-            return super.move(x,y,z);
-        }
-        
-        @Override
-        public int attachChild(Spatial s) {
-            return leftRightRotNode.attachChild(s);
-        }
-        
-        @Override
-        public int detachChild(Spatial s) {
-            return leftRightRotNode.detachChild(s);
-        }
-    }
-    */
 }

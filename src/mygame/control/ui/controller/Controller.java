@@ -2,6 +2,7 @@ package mygame.control.ui.controller;
 
 import com.jme3.asset.AssetManager;
 import com.jme3.input.InputManager;
+import com.jme3.input.controls.Trigger;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector2f;
@@ -9,11 +10,13 @@ import com.jme3.math.Vector3f;
 import com.jme3.renderer.Camera;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Mesh;
+import com.jme3.scene.Node;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import mygame.control.NavigationController;
 import mygame.control.ui.Updatable;
 import mygame.model.data.ml.similarity.jblas.JblasRadialBasisSimilarity;
 import mygame.model.data.ml.similarity.jme.JMECosAngleSquaredSimilarity;
@@ -64,8 +67,11 @@ public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
     private DoubleMatrix normals;
     private Volume activeModel = null;
     private Geometry activeModelGeom = null;
+    private NavigationController navController;
     
     public Controller(AssetManager assetManager, InputManager inputManager, Camera cam, InteractivePointCloudManipulator model) {
+        this.navController = new NavigationController(inputManager);
+        this.navController.attachChildren(model.getCloud().getCloudNode());
         Vector3f[] pointsVec = model.getPointClones();
         this.MODEL_MAT = getModelMat(assetManager);
         this.points = JblasJMEConverter.toDoubleMatrix(pointsVec);
@@ -141,6 +147,7 @@ public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
     
     @Override
     public void update(float timePerFrame) {
+        navController.update(timePerFrame);
         screenNeighborSearcher.setTransform(model.getCloud().getCloudNode().getWorldTransform().toTransformMatrix());
         if(input.getActiveSegmenter() != null) {
             if(input.actionActive(UIController.ActionType.SELECT_ACTION)) {
@@ -223,9 +230,6 @@ public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
         return pointSubset;
     }
     
-    protected void calcVolumeSelected() {
-        
-    }
     
     private static enum GraphType {
         ON_THE_FLY_ANGLE("On the fly angle"), SPARSE_DISTANCE("Sparse distance"), SPARSE_ANGLE("Sparse angle");
@@ -241,6 +245,17 @@ public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
         private SegmenterType(String buttonText) {this.BUTTON_TEXT = buttonText;}
         @Override
         public String toString() {return BUTTON_TEXT;}
+    }
+    
+    public void setParent(Node node){ 
+        navController.setParent(node);
+    }
+    
+    protected Map<String, Trigger> getBindings() {
+        Map<String, Trigger> out = navController.getAnalogBindings();
+        out.putAll(navController.getDiscreteBindings());
+        out.putAll(input.getBindings());
+        return out;
     }
     
     protected static enum ModelFitType {

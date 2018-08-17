@@ -14,15 +14,18 @@ import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.controls.MouseAxisTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.input.controls.Trigger;
-import com.jme3.math.Quaternion;
+import com.jme3.math.Matrix3f;
 import com.jme3.math.Vector2f;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mygame.control.ui.Updatable;
+import mygame.util.JblasJMEConverter;
+import org.jblas.DoubleMatrix;
 
 
 
@@ -94,12 +97,10 @@ public class NavigationController implements Updatable {
         public void onAnalog(String actionName, float value, float tpf) {
             switch(actionName) {
                 case "FORWARD": 
-                    cameraNode.slideBackwardForward(MOVE_VELOCITY*tpf);
-                    //cameraNode.move(0f,0f,MOVE_VELOCITY*tpf);
+                    cameraNode.move(0f,0f,MOVE_VELOCITY*tpf);
                     break;
                 case "BACKWARD":
-                    cameraNode.slideBackwardForward(-MOVE_VELOCITY*tpf);
-                    //cameraNode.move(0f,0f,-MOVE_VELOCITY*tpf);
+                    cameraNode.move(0,0,-MOVE_VELOCITY*tpf);
                     break;
                 case "LEFT":
                     cameraNode.move(-MOVE_VELOCITY*tpf,0f,0f);
@@ -187,7 +188,7 @@ public class NavigationController implements Updatable {
             (has something to do with multiplying by a factor determined by altitude, and maybe something to do with perspective shift?)
             */
             cameraNode.move(DRAG_VELOCITY_PER_PIXEL*mouseDelta.x*cameraNode.getLocalScale().x, 0f, 0f);
-            cameraNode.slideBackwardForward(-DRAG_VELOCITY_PER_PIXEL*mouseDelta.y*cameraNode.getLocalScale().x);
+            cameraNode.move(0f,0f,-DRAG_VELOCITY_PER_PIXEL*mouseDelta.y*cameraNode.getLocalScale().x);
         }
         mousePos = newMousePos;
         
@@ -195,10 +196,12 @@ public class NavigationController implements Updatable {
     
     private class VolumetricsCameraNode extends Node {
         private Node leftRightRotNode = new Node();
+        private Node moveNode = new Node();
         
         public VolumetricsCameraNode() {
             super();
             super.attachChild(leftRightRotNode);
+            leftRightRotNode.attachChild(moveNode);
         }
         
         protected void spinLeftRight(float angle) {
@@ -218,10 +221,67 @@ public class NavigationController implements Updatable {
             return this.getLocalRotation().toAngles(new float[3])[0];
         }
         
+        
+        @Override
+        public Spatial move(float x, float y, float z) {
+            DoubleMatrix rotProjMat = JblasJMEConverter.toDoubleMatrix(leftRightRotNode.getLocalRotation().toRotationMatrix()).transpose();
+            DoubleMatrix p = new DoubleMatrix(new double[][]{{x, y, z}});
+            DoubleMatrix moveProjs = rotProjMat.mmul(p.transpose());
+            return moveNode.move((float)moveProjs.get(0),
+                    (float)moveProjs.get(1),
+                    (float)moveProjs.get(2));
+        }
+        
+        @Override
+        public int attachChild(Spatial s) {
+            return moveNode.attachChild(s);
+        }
+        
+        @Override
+        public int detachChild(Spatial s) {
+            return moveNode.detachChild(s);
+        }
+    }
+    
+    /*
+    private class VolumetricsCameraNode extends Node {
+        private Node leftRightRotNode = new Node();
+        private Node upDownRotNode = new Node();
+        
+        public VolumetricsCameraNode() {
+            super();
+            //super.attachChild(leftRightRotNode);
+            //super.attachChild(upDownRotNode);
+            super.attachChild(upDownRotNode);
+            upDownRotNode.attachChild(leftRightRotNode);
+        }
+        
+        protected void spinLeftRight(float angle) {
+            leftRightRotNode.rotate(0f, angle, 0f);
+        }
+        
+        protected void spinDownUp(float angle) {
+            upDownRotNode.rotate(angle, 0f, 0f);
+        }
+        
+        protected void setDownUpSpin(float angle) {
+            float rotation = this.getDownUpSpin();
+            upDownRotNode.rotate(angle - rotation, 0f, 0f);
+        }
+        
+        public float getDownUpSpin() {
+            return upDownRotNode.getLocalRotation().toAngles(new float[3])[0];
+        }
+        
         //slides this camera node such that its height remains constant (like dragging a piece of paper on the table)
         public void slideBackwardForward(float amount) {
             double angle = -getDownUpSpin();
             this.move(0f, (float)(Math.sin(angle)*amount), (float)(Math.cos(angle)*amount));
+        }
+        
+        @Override
+        public Spatial move(float x, float y, float z) {
+            return super.move(x,y,z);
         }
         
         @Override
@@ -234,4 +294,5 @@ public class NavigationController implements Updatable {
             return leftRightRotNode.detachChild(s);
         }
     }
+    */
 }

@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import mygame.model.volumetrics.Facet;
-import mygame.model.volumetrics.ScalarField;
+import mygame.model.volumetrics.scalarfield.ScalarField;
 import mygame.model.volumetrics.Volume;
 import org.jblas.DoubleMatrix;
 

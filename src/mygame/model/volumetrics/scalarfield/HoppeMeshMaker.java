@@ -1,4 +1,4 @@
-package mygame.model.volumetrics;
+package mygame.model.volumetrics.scalarfield;
 
 import mygame.model.data.search.NearestNeighborSearcher;
 import org.jblas.DoubleMatrix;

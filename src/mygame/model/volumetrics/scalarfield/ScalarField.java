@@ -1,4 +1,4 @@
-package mygame.model.volumetrics;
+package mygame.model.volumetrics.scalarfield;
 
 
 public interface ScalarField <DataType> {

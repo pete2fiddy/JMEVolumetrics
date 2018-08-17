@@ -17,6 +17,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import mygame.control.ui.ColorChangingButton;
 import mygame.control.ui.LabeledSliderPanel;
+import mygame.control.ui.controller.Controller.ModelFitType;
 
 public class ControllerToolboxFrame <GraphType extends Enum, SegmenterType extends Enum> extends JFrame {
     private static final Color SELECTED_COLOR = Color.RED, UNSELECTED_COLOR = Color.WHITE;
@@ -28,7 +29,7 @@ public class ControllerToolboxFrame <GraphType extends Enum, SegmenterType exten
     private ColorChangingButton activeSegmenterComponent;
     private LabeledSliderPanel radiusSliderPanel = new LabeledSliderPanel(0,100);
     private LabeledSliderPanel toleranceSliderPanel = new LabeledSliderPanel(0,100);
-    private boolean updateModel = false;
+    private ModelFitType modelType = ModelFitType.NONE;
     private ModelFitPanel fitPanel;
     private Controller controller;
     
@@ -62,7 +63,7 @@ public class ControllerToolboxFrame <GraphType extends Enum, SegmenterType exten
         this.add(radiusSliderPanel);
         this.add(toleranceSliderPanel);
         
-        this.fitPanel = new ModelFitPanel(FIT_MODEL_LISTENER, CALC_VOLUME_LISTENER);
+        this.fitPanel = new ModelFitPanel(FIT_MODEL_LISTENER, CALC_VOLUME_LISTENER, CONV_HULL_LISTENER);
         add(this.fitPanel);
         
         pack();
@@ -82,7 +83,7 @@ public class ControllerToolboxFrame <GraphType extends Enum, SegmenterType exten
         }
     }
     
-    protected boolean getModelNeedsToUpdate() {boolean out = updateModel; updateModel = false; return out;}
+    protected ModelFitType getModelFitType() {ModelFitType out = modelType; modelType = ModelFitType.NONE; return out;}
     
     protected SegmenterType getActiveSegmenter() {return compToSegmenter.get(activeSegmenterComponent);}
     
@@ -102,11 +103,19 @@ public class ControllerToolboxFrame <GraphType extends Enum, SegmenterType exten
     private final ActionListener FIT_MODEL_LISTENER = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent ae) {
-            updateModel = true;
+            modelType = ModelFitType.HOPPE;
             fitPanel.calcVolumeButton.setVisible(true);
         }
     };
-            
+    
+    private final ActionListener CONV_HULL_LISTENER = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent ae) {
+            modelType = ModelFitType.CONV_HULL;
+            fitPanel.calcVolumeButton.setVisible(true);
+        }
+    };
+    
     private final ActionListener CALC_VOLUME_LISTENER = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent ae) {
@@ -153,5 +162,6 @@ public class ControllerToolboxFrame <GraphType extends Enum, SegmenterType exten
             pack();
         }
     };
+    
     
 }

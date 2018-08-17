@@ -43,6 +43,7 @@ public class PrimsMinSpan {
     private static void constructPrimsMST(Map<Integer, Double>[] weights, Graph tree, PrimsNode[] primsNodes, ArrayBinaryMinHeap<PrimsNode> nodeHeap, boolean[] added) {
         if(nodeHeap.size() <= 0) return;
         PrimsNode addNode = nodeHeap.pop();
+        if(addNode.inMstId < 0) throw new UnsupportedOperationException("Graph passed to buildMST has only one connected component -- MST not constructable!");
         tree.link(addNode.inMstId, addNode.MY_ID, addNode.weight);
         added[addNode.MY_ID] = true;
         for(int outNode : weights[addNode.MY_ID].keySet()) {

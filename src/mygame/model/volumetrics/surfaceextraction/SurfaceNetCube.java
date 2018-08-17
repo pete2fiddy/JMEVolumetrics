@@ -9,7 +9,7 @@ import mygame.model.graph.GraphEdge;
 import mygame.model.graph.SparseGraph;
 import mygame.util.HashUtil;
 import mygame.util.JblasJMEConverter;
-import mygame.model.volumetrics.ScalarField;
+import mygame.model.volumetrics.scalarfield.ScalarField;
 import org.jblas.DoubleMatrix;
 
 public class SurfaceNetCube {

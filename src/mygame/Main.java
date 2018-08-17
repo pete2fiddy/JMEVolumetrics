@@ -13,6 +13,7 @@ import javax.swing.UIManager;
 import mygame.control.ui.controller.Controller;
 import mygame.model.data.search.priorityqueue.ArrayBinaryMinHeap;
 import mygame.util.JblasJMEConverter;
+import mygame.util.RandomUtil;
 
 /**
  * This is the Main Class of your Game. You should only do initialization here.
@@ -33,14 +34,25 @@ public class Main extends SimpleApplication {
     
     /*
     
+    TODO: Even fairly small clouds for whatever reason can take a long time to appear on screen...
+    
+    TODO: Convex hull fairly slow... maybe unavoidable because real models will have points all near the surface
+    and few interior points
+    
+    TODO: Utilize convex hull for meshes that contain interior point because two separate mesh's points are merged
+    together?
+    
+    TODO: Could create a more robust volume calculator given that all my models are fit and then surface-netted
+    that just adds the volume of the contained surface net cubes... Would be much more resilient to holes.
+    Would prefer not to implement in the same method as surface netthough, but running algorithm twice,
+    once for model and once for volume, would also be a waste.
+    
+    TODO: RBFMeshMaker memory overflows on medium and greater sized point sets, and is slow. Fix. Can sparsify the system using a nearest neighbor searcher
+    and restricting the number of neighbors used when summing the RBFs. Use when constructing and evaluating the rbf
+    
     TODO: Orient model faces so that closest faces, instead of far, are buffered on top (flip all normals of model so it looks correct)
     
     TODO: Add model resolution slider
-    
-    TODO: Make arrayBinaryHeap and IndexTrackingArrayBinaryHeap more private to GraphUtil, or extend a more general implementation (array binary heap should ideally not give
-    normal operation access to indices and stuff, and both are a bit confusing for general use).
-    
-    TODO: Process of calculating a mesh volume (orient normals -> surface net) MEGA slow
     
     TODO: Ground plane selection (fill in gaps wth points)
     
@@ -53,6 +65,8 @@ public class Main extends SimpleApplication {
     TODO: need to enable depth buffering. With point clouds, points definitely in front can get painted behind.
     
     TODO: Speed up surface net
+    
+    TODO: Clean up PrimsMinSpan implementation
     
     Organization":
     
@@ -99,22 +113,8 @@ public class Main extends SimpleApplication {
     }
     
     
-    private void testQueue() {
-        
-        Integer[] data = {1,3,4,6,5,7,10,12,9};
-        
-        ArrayBinaryMinHeap<Integer> heap = new ArrayBinaryMinHeap(data.length);
-        for(int d : data) {
-            heap.add(d, d);
-        }
-        while(heap.size() > 0) {
-            System.out.println("min: " + heap.pop());
-        }
-    }
-    
-    
     private void test() {
-        Vector3f[] points = Test.generateSpheresVec3f(25000, new Vector3f[] {new Vector3f(0f, 0f, 0f), new Vector3f(-3f, -4f, -3f)}, new float[] {2f, 1f});
+        Vector3f[] points = Test.generateRandomShapes(1000, 3, 3);//Test.generateCubesVec3f(10000, new Vector3f[] {new Vector3f(0f, 0f, 0f), new Vector3f(-3f, -4f, -3f)}, new float[] {2f, 1f});
         
         PointCloud pointCloud = new PointCloud(assetManager, points, new ColorRGBA(1f, 0f, 0f, 1f), 20f);
         
@@ -180,6 +180,9 @@ public class Main extends SimpleApplication {
         */
         
     }
+    
+    
+    
     
     /* Use the main event loop to trigger repeating actions. */
     @Override

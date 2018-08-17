@@ -2,6 +2,7 @@ package mygame;
 
 import com.jme3.math.Matrix3f;
 import com.jme3.math.Vector3f;
+import mygame.util.RandomUtil;
 
 public class Test {
     
@@ -107,6 +108,35 @@ public class Test {
             out[i].setY((float)(rHeight * Math.cos(theta)));
             out[i].setZ(z);
             out[i] = out[i].add(center);
+        }
+        return out;
+    }
+    
+    protected static Vector3f[] generateRandomShapes(int shapePoints, int nSpheres, int nCubes) {
+        double[][] range = {{-10,10},{0,0}, {-10,10}};
+        double[] radiusBounds = {.5, 2};
+        
+        Vector3f[] out = new Vector3f[shapePoints*(nSpheres+nCubes)];
+        int outInd = 0;
+        for(int i = 0; i < nSpheres; i++) {
+            Vector3f[] spherePoints = Test.generateSphereVec3f(shapePoints, 
+                    new Vector3f((float)RandomUtil.generateInRange(range[0]),
+                    (float)RandomUtil.generateInRange(range[1]),
+                    (float)RandomUtil.generateInRange(range[2])), 
+                    (float)RandomUtil.generateInRange(radiusBounds));
+            for(int j = 0; j < spherePoints.length; j++) {
+                out[outInd++] = spherePoints[j];
+            }
+        }
+        for(int i = 0; i < nCubes; i++) {
+            Vector3f[] cubePoints = Test.generateCubeVec3f(shapePoints,
+                    new Vector3f((float)RandomUtil.generateInRange(range[0]),
+                    (float)RandomUtil.generateInRange(range[1]),
+                    (float)RandomUtil.generateInRange(range[2])), 
+                    (float)RandomUtil.generateInRange(radiusBounds));
+            for(int j = 0; j < cubePoints.length; j++) {
+                out[outInd++] = cubePoints[j];
+            }
         }
         return out;
     }

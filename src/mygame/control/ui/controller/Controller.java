@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import mygame.control.ui.Updatable;
+import mygame.model.data.ml.similarity.jblas.JblasRadialBasisSimilarity;
 import mygame.model.data.ml.similarity.jme.JMECosAngleSquaredSimilarity;
 import mygame.model.data.ml.similarity.jme.JMERadialBasisSimilarity;
 import mygame.model.data.search.KDTree;
@@ -31,11 +32,13 @@ import mygame.model.segment.SegmenterVisitor;
 import mygame.model.segment.SelectionSimilarityConstrainedPaintbrushSegmenter;
 import mygame.model.segment.SelectionSimilarityConstrainedPaintbrushSegmenter.SelectionSimilarityConstrainedPaintbrushSegmenterArgs;
 import mygame.model.volumetrics.CloudNormal;
-import mygame.model.volumetrics.HoppeMeshMaker;
-import mygame.model.volumetrics.ScalarField;
+import mygame.model.volumetrics.scalarfield.HoppeMeshMaker;
+import mygame.model.volumetrics.scalarfield.ScalarField;
 import mygame.model.volumetrics.Volume;
 import mygame.model.volumetrics.VolumeSolver;
+import mygame.model.volumetrics.scalarfield.RBFMeshMaker;
 import mygame.model.volumetrics.surfaceextraction.NaiveSurfaceNet;
+import mygame.model.volumetrics.surfaceextraction.convexhull.ConvexHull;
 import mygame.util.GraphUtil;
 import mygame.util.JblasJMEConverter;
 import mygame.util.MeshUtil;
@@ -151,9 +154,7 @@ public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
         if(input.actionActive(UIController.ActionType.CLEAR_ACTION)) {
             selectedPoints = new HashSet<Integer>();
         }
-        if(input.getModelNeedsToUpdate()) {
-            updateActiveModel();
-        }
+        updateActiveModel(input.getModelFitType());
         model.selectPoints(selectedPoints);
         model.update(timePerFrame);
         input.update(timePerFrame);
@@ -166,20 +167,32 @@ public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
         return screenNeighborSearcher.getNearestNeighborId(new Vector3f(selectPos.x, selectPos.y, 0), 10);
     }
 
-    private void updateActiveModel() {
+    private void updateActiveModel(ModelFitType modelType) {
         DoubleMatrix pointSubset = getPointsSubset(points, selectedPoints);
-        DoubleMatrix normalsSubset = getPointsSubset(normals, selectedPoints);
-        NearestNeighborSearcher subsetSearcher = new KDTree(pointSubset.toArray2());
-        CloudNormal.hoppeOrientNormals(pointSubset, normalsSubset, subsetSearcher, N_ORIENTATION_NEIGHBORS);
-        this.activeModel = NaiveSurfaceNet.getVolume(getReconstructionField(pointSubset, normalsSubset, subsetSearcher), 
-            RECONSTRUCTION_ISO_VALUE, 
-            PointUtil.getPointBounds3d(pointSubset), 
-            SURFACE_NETS_CUBE_DIM, 
-            1);
-        VolumeUtil.useCloudNormalsToOrientFaces(subsetSearcher, normalsSubset, activeModel);
-        if(this.activeModelGeom != null) model.getCloud().getCloudNode().detachChild(this.activeModelGeom);
-        this.activeModelGeom = createModelGeometry(activeModel);
-        model.getCloud().getCloudNode().attachChild(this.activeModelGeom);
+        switch(modelType) {
+            case HOPPE:
+                DoubleMatrix normalsSubset = getPointsSubset(normals, selectedPoints);
+                NearestNeighborSearcher subsetSearcher = new KDTree(pointSubset.toArray2());
+                CloudNormal.hoppeOrientNormals(pointSubset, normalsSubset, subsetSearcher, N_ORIENTATION_NEIGHBORS);
+                this.activeModel = NaiveSurfaceNet.getVolume(getReconstructionField(pointSubset, normalsSubset, subsetSearcher), 
+                    RECONSTRUCTION_ISO_VALUE, 
+                    PointUtil.getPointBounds3d(pointSubset), 
+                    SURFACE_NETS_CUBE_DIM, 
+                    1);
+                VolumeUtil.useCloudNormalsToOrientFaces(subsetSearcher, normalsSubset, activeModel);
+                
+                break;
+            case CONV_HULL:
+                this.activeModel = ConvexHull.quickhull3d(pointSubset);
+                break;
+            case NONE:
+                break;
+        }
+        if(modelType != ModelFitType.NONE) {
+           if(this.activeModelGeom != null) model.getCloud().getCloudNode().detachChild(this.activeModelGeom);
+           this.activeModelGeom = createModelGeometry(activeModel);
+           model.getCloud().getCloudNode().attachChild(this.activeModelGeom);   
+        }        
     }
     
     protected double calcActiveModelVolume() {
@@ -188,8 +201,6 @@ public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
     }
     
     private Geometry createModelGeometry(Volume v) {
-        
-        
         Mesh m = MeshUtil.createNoIndexMesh(v);
         Geometry out = new Geometry("volume geometry", m);
         out.setMaterial(MODEL_MAT);
@@ -197,6 +208,9 @@ public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
     }
     
     private ScalarField<DoubleMatrix> getReconstructionField(DoubleMatrix subsetPoints, DoubleMatrix orientedSubsetNormals, NearestNeighborSearcher subsetSearcher) {
+        /*RBFMeshMaker out = new RBFMeshMaker(subsetPoints, orientedSubsetNormals, new JblasRadialBasisSimilarity(1));
+        out.fit();
+        return out;*/
         return new HoppeMeshMaker(subsetPoints, orientedSubsetNormals, subsetSearcher);
     }
     
@@ -227,5 +241,9 @@ public class Controller implements Updatable, SegmenterVisitor<Set<Integer>> {
         private SegmenterType(String buttonText) {this.BUTTON_TEXT = buttonText;}
         @Override
         public String toString() {return BUTTON_TEXT;}
+    }
+    
+    protected static enum ModelFitType {
+        HOPPE, CONV_HULL, NONE;
     }
 }

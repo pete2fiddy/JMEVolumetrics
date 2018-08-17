@@ -15,8 +15,10 @@ import mygame.model.graph.SymmetricGraph;
 import mygame.model.data.ml.CurvatureSimilarityGraphConstructor;
 import mygame.model.data.ml.JblasPCA;
 import mygame.model.graph.algo.PrimsMinSpan;
+import mygame.util.BoxUtil;
 import mygame.util.GraphUtil;
 import mygame.util.JblasJMEConverter;
+import mygame.util.PointUtil;
 import org.jblas.DoubleMatrix;
 
 public class CloudNormal {
@@ -39,10 +41,24 @@ public class CloudNormal {
     */
     public static void hoppeOrientNormals(DoubleMatrix X, DoubleMatrix normals,  NearestNeighborSearcher kdTree, int kNeighborsRiemannian) {
         SymmetricGraph riemannian = CurvatureSimilarityGraphConstructor.constructRiemannianPCASimilarityGraph(X, normals, kdTree, kNeighborsRiemannian);
-        int headId = 0;
+        
+        
+        int headId = flipHeadIndToFaceOutward(X, normals);
         //paper talks about how to choose a good head id, but using an arbitrary value for now
         Graph riemannianMinSpanTree = PrimsMinSpan.buildMST(riemannian, headId);
         setIndsToHoppeOrientNormalsWithRiemannianMinSpanTree(normals, riemannianMinSpanTree, headId, new HashSet<Integer>());
+    }
+    
+    private static int flipHeadIndToFaceOutward(DoubleMatrix X, DoubleMatrix normals) {
+        double[][] bbox = PointUtil.getPointBounds3d(X);
+        int out = 0;
+        for(int i = 0; i < X.rows; i++) {
+            if(X.get(i, 0) > X.get(out, 0)) {
+                out = i;
+            }
+        }
+        if(BoxUtil.boxContains(bbox, X.getRow(out).add(normals.getRow(out)))) normals.putRow(out, normals.getRow(out).mul(-1));
+        return out;
     }
     
     /*
